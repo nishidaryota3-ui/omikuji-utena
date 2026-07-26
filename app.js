@@ -86,7 +86,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（空文字による上書きを100%ブロック）
+// 歳時記データベースの読み込み処理（動的列位置解析による完全保護ロジック）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -94,20 +94,28 @@ function saijikiDataReceived(data) {
         let dict = {};
 
         for (let i = 0; i < rows.length; i++) {
-            const c = rows[i].c;
-            if (!c || !c[2] || c[2].v === null || c[2].v === undefined) continue;
+            const rowCells = rows[i].c;
+            if (!rowCells) continue;
 
-            let parentKigo = String(c[2].v).trim(); // C列: 親季語
+            // セルが存在する位置と値を安全にスキャン
+            let cellValues = [];
+            for (let j = 0; j < rowCells.length; j++) {
+                let cell = rowCells[j];
+                cellValues[j] = (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v).trim() : '';
+            }
+
+            // C列（インデックス2）に親季語があるか確認
+            let parentKigo = cellValues[2] || '';
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = (c[3] && c[3].v !== null && c[3].v !== undefined) ? String(c[3].v).trim() : '';   // D列: よみがな
-            let childKigos = (c[6] && c[6].v !== null && c[6].v !== undefined) ? String(c[6].v).trim() : ''; // G列: 表示用子季語
-            let desc = (c[7] && c[7].v !== null && c[7].v !== undefined) ? String(c[7].v).trim() : '';       // H列: 季語の説明
+            let kigoKana = cellValues[3] || '';  // D列 (インデックス3)
+            let childKigos = cellValues[6] || ''; // G列 (インデックス6)
+            let desc = cellValues[7] || '';       // H列 (インデックス7)
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
             } else {
-                // 既に登録済みの親季語の場合、有効な文字列（長さ1以上）がある時のみ上書き・保持する
+                // 有効な文字列（長さ1以上）が存在する場合のみ保存し、空文字での上書きを遮断
                 if (kigoKana.length > 0) dict[parentKigo].kigoKana = kigoKana;
                 if (childKigos.length > 0) dict[parentKigo].childKigos = childKigos;
                 if (desc.length > 0) dict[parentKigo].desc = desc;
