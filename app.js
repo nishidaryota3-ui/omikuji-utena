@@ -89,7 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理
+// 歳時記データベースの読み込み処理（確実かつシンプルなデータ保持ロジック）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -115,10 +115,10 @@ function saijikiDataReceived(data) {
                     desc: desc
                 };
             } else {
-                // 複数行にまたがる場合、値が入っている行のデータで補完
-                if (!dict[parentKigo].kigoKana && kigoKana) dict[parentKigo].kigoKana = kigoKana;
-                if (!dict[parentKigo].childKigos && childKigos) dict[parentKigo].childKigos = childKigos;
-                if (!dict[parentKigo].desc && desc) dict[parentKigo].desc = desc;
+                // すでに登録済みの親季語の場合、値が存在する時だけ更新（空文字で上書きさせない）
+                if (kigoKana) dict[parentKigo].kigoKana = kigoKana;
+                if (childKigos) dict[parentKigo].childKigos = childKigos;
+                if (desc) dict[parentKigo].desc = desc;
             }
         }
         saijikiDict = dict;
@@ -340,7 +340,7 @@ function showKigoList(seasonCode, seasonName) {
     renderPage('kigoListPage');
 }
 
-// 🌸 ポップアップ表示とデバッグ用メッセージのセット
+// 🌸 ポップアップ表示
 function openSaijikiKigoWithCard(kigoName) {
     currentTargetKigo = kigoName;
     let saijikiInfo = saijikiDict[kigoName];
@@ -350,10 +350,9 @@ function openSaijikiKigoWithCard(kigoName) {
     const descEl = document.getElementById('cardDesc');
 
     if (!saijikiInfo) {
-        // 辞書自体に親季語が見つからない場合
         if (parentEl) parentEl.innerText = kigoName;
         if (childEl) childEl.innerText = '';
-        if (descEl) descEl.innerText = '※辞書データが見つかりませんでした（シート名「歳時記データベース」か親季語名の不一致）';
+        if (descEl) descEl.innerText = '解説データ準備中';
     } else {
         if (parentEl) {
             if (saijikiInfo.kigoKana) {
@@ -362,12 +361,8 @@ function openSaijikiKigoWithCard(kigoName) {
                 parentEl.innerText = saijikiInfo.parentKigo;
             }
         }
-        if (childEl) childEl.innerText = saijikiInfo.childKigos ? `子季語：${saijikiInfo.childKigos}` : '子季語：なし';
-        
-        // H列のデータの有無をチェック
-        if (descEl) {
-            descEl.innerText = saijikiInfo.desc ? saijikiInfo.desc : '※解説（H列）が空欄または取得できていません';
-        }
+        if (childEl) childEl.innerText = saijikiInfo.childKigos ? `子季語：${saijikiInfo.childKigos}` : '';
+        if (descEl) descEl.innerText = saijikiInfo.desc ? saijikiInfo.desc : '解説データ準備中';
     }
 
     const overlay = document.getElementById('kigoCardOverlay');
