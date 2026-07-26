@@ -89,7 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（C〜H列の範囲インデックスを精密補正）
+// 歳時記データベースの読み込み処理
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -100,12 +100,12 @@ function saijikiDataReceived(data) {
             const c = rows[i].c;
             if (!c || !c[0] || !c[0].v) continue;
 
-            let parentKigo = String(c[0].v).trim(); // C列: 親季語 (配列位置 0)
+            let parentKigo = String(c[0].v).trim(); // C列: 親季語 (c[0])
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = c[1] && c[1].v ? String(c[1].v).trim() : '';   // D列: 親季語よみがな (配列位置 1)
-            let childKigos = c[4] && c[4].v ? String(c[4].v).trim() : ''; // G列: 表示用子季語 (配列位置 4)
-            let desc = c[5] && c[5].v ? String(c[5].v).trim() : '';       // H列: 季語の説明 (配列位置 5)
+            let kigoKana = c[1] && c[1].v ? String(c[1].v).trim() : '';   // D列: 親季語よみがな (c[1])
+            let childKigos = c[4] && c[4].v ? String(c[4].v).trim() : ''; // G列: 表示用子季語 (c[4])
+            let desc = c[5] && c[5].v ? String(c[5].v).trim() : '';       // H列: 季語の説明 (c[5])
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = {
@@ -267,7 +267,7 @@ function jumpToAuthorRoom(author) {
     openRoom('author', author, author);
 }
 
-// 🔍 季語検索機能（入力中の誤作動防止対応）
+// 🔍 季語検索機能
 function handleKigoSearch() {
     const input = document.getElementById('kigoSearchInput');
     const resultsContainer = document.getElementById('searchResults');
@@ -340,28 +340,35 @@ function showKigoList(seasonCode, seasonName) {
     renderPage('kigoListPage');
 }
 
+// 🌸 ポップアップ表示とデバッグ用メッセージのセット
 function openSaijikiKigoWithCard(kigoName) {
     currentTargetKigo = kigoName;
-    let saijikiInfo = saijikiDict[kigoName] || {
-        parentKigo: kigoName,
-        kigoKana: '',
-        childKigos: '',
-        desc: '解説データが準備中です。'
-    };
+    let saijikiInfo = saijikiDict[kigoName];
 
     const parentEl = document.getElementById('cardParentKigo');
     const childEl = document.getElementById('cardChildKigo');
     const descEl = document.getElementById('cardDesc');
 
-    if (parentEl) {
-        if (saijikiInfo.kigoKana) {
-            parentEl.innerHTML = `<ruby>${saijikiInfo.parentKigo}<rt>${saijikiInfo.kigoKana}</rt></ruby>`;
-        } else {
-            parentEl.innerText = saijikiInfo.parentKigo;
+    if (!saijikiInfo) {
+        // 辞書自体に親季語が見つからない場合
+        if (parentEl) parentEl.innerText = kigoName;
+        if (childEl) childEl.innerText = '';
+        if (descEl) descEl.innerText = '※辞書データが見つかりませんでした（シート名「歳時記データベース」か親季語名の不一致）';
+    } else {
+        if (parentEl) {
+            if (saijikiInfo.kigoKana) {
+                parentEl.innerHTML = `<ruby>${saijikiInfo.parentKigo}<rt>${saijikiInfo.kigoKana}</rt></ruby>`;
+            } else {
+                parentEl.innerText = saijikiInfo.parentKigo;
+            }
+        }
+        if (childEl) childEl.innerText = saijikiInfo.childKigos ? `子季語：${saijikiInfo.childKigos}` : '子季語：なし';
+        
+        // H列のデータの有無をチェック
+        if (descEl) {
+            descEl.innerText = saijikiInfo.desc ? saijikiInfo.desc : '※解説（H列）が空欄または取得できていません';
         }
     }
-    if (childEl) childEl.innerText = saijikiInfo.childKigos ? `子季語：${saijikiInfo.childKigos}` : '';
-    if (descEl) descEl.innerText = saijikiInfo.desc;
 
     const overlay = document.getElementById('kigoCardOverlay');
     if (overlay) overlay.classList.remove('hidden');
