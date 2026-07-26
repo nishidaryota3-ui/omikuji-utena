@@ -89,7 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（確実かつシンプルなデータ保持ロジック）
+// 歳時記データベースの読み込み処理（C〜H列をダイレクトに紐付け）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -98,14 +98,14 @@ function saijikiDataReceived(data) {
 
         for (let i = 0; i < rows.length; i++) {
             const c = rows[i].c;
-            if (!c || !c[0] || !c[0].v) continue;
+            if (!c || !c[0] || c[0].v === null || c[0].v === undefined) continue;
 
             let parentKigo = String(c[0].v).trim(); // C列: 親季語 (c[0])
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = c[1] && c[1].v ? String(c[1].v).trim() : '';   // D列: 親季語よみがな (c[1])
-            let childKigos = c[4] && c[4].v ? String(c[4].v).trim() : ''; // G列: 表示用子季語 (c[4])
-            let desc = c[5] && c[5].v ? String(c[5].v).trim() : '';       // H列: 季語の説明 (c[5])
+            let kigoKana = (c[1] && c[1].v) ? String(c[1].v).trim() : '';   // D列: 親季語よみがな (c[1])
+            let childKigos = (c[4] && c[4].v) ? String(c[4].v).trim() : ''; // G列: 表示用子季語 (c[4])
+            let desc = (c[5] && c[5].v) ? String(c[5].v).trim() : '';       // H列: 季語の説明 (c[5])
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = {
@@ -115,10 +115,10 @@ function saijikiDataReceived(data) {
                     desc: desc
                 };
             } else {
-                // すでに登録済みの親季語の場合、値が存在する時だけ更新（空文字で上書きさせない）
-                if (kigoKana) dict[parentKigo].kigoKana = kigoKana;
-                if (childKigos) dict[parentKigo].childKigos = childKigos;
-                if (desc) dict[parentKigo].desc = desc;
+                // 同じ親季語が複数行ある場合、文字が入っている行のデータを保持（空文字で上書きしない）
+                if (kigoKana && !dict[parentKigo].kigoKana) dict[parentKigo].kigoKana = kigoKana;
+                if (childKigos && !dict[parentKigo].childKigos) dict[parentKigo].childKigos = childKigos;
+                if (desc && !dict[parentKigo].desc) dict[parentKigo].desc = desc;
             }
         }
         saijikiDict = dict;
