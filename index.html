@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>うてな俳句会 デジタル機関誌</title>
+    <title>うてな俳句会 臺俳句</title>
 
     <!-- PWA / Android・iOS スタンドアロン指定 -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="デジタル臺誌">
-    <meta name="application-name" content="デジタル臺誌">
+    <meta name="apple-mobile-web-app-title" content="臺俳句">
+    <meta name="application-name" content="臺俳句">
     <meta name="theme-color" content="#faf9f6">
     
     <!-- アプリアイコン指定 -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
-    <link rel="manifest" href="manifest.json">
 
     <!-- 🎨 デザインファイルを読み込み -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="loadingOverlay">臺誌を開いています...</div>
+    <div id="loadingOverlay">臺俳句を開いています...</div>
 
     <!-- 🐾 おみ句じ猫ボタン -->
     <img id="fixedCatBtn" src="omikuji-cat.png" alt="おみ句じを引く" class="fixed-cat-trigger hidden" onclick="triggerInstantOmikuji()" title="おみ句じを引く">
@@ -36,6 +35,15 @@
         <div class="header-row-bottom">
             <div id="roomMainTag" class="info-upper-tag"></div>
             <div id="infoTrigger" onclick="revealHiddenInfo()">ℹ</div>
+        </div>
+    </div>
+
+    <!-- 🌸 季語解説ポップアップカード -->
+    <div id="kigoCardOverlay" class="card-overlay hidden" onclick="closeKigoCard()">
+        <div class="kigo-card-content">
+            <div class="card-column parent-kigo-col" id="cardParentKigo"></div>
+            <div class="card-column child-kigo-col" id="cardChildKigo"></div>
+            <div class="card-column desc-kigo-col" id="cardDesc"></div>
         </div>
     </div>
 
@@ -56,9 +64,9 @@
             <div class="vertical-link main-headline" onclick="navigateTo('saijikiPage')">季寄せ</div>
         </div>
 
-        <!-- デジタル臺誌 ブロック -->
+        <!-- 臺俳句 ブロック -->
         <div class="menu-block">
-            <div class="vertical-link main-headline" onclick="showIssueYearList()">デジタル臺誌</div>
+            <div class="vertical-link main-headline" onclick="showIssueYearList()">臺俳句</div>
         </div>
     </div>
 
@@ -81,6 +89,12 @@
 
     <!-- 季寄せ：季節一覧 ページ -->
     <div id="saijikiPage" class="layer-page">
+        <!-- 🔍 季語検索エリア -->
+        <div class="saijiki-search-box">
+            <input type="text" id="kigoSearchInput" placeholder="季語を検索（例：春の夕）" oninput="handleKigoSearch()">
+            <div id="searchResults" class="search-results-dropdown hidden"></div>
+        </div>
+
         <div class="fits-screen-container">
             <div class="vertical-link" onclick="showKigoList('haru', '春')">春</div>
             <div class="vertical-link" onclick="showKigoList('natsu', '夏')">夏</div>
@@ -96,22 +110,27 @@
         <div id="kigoList" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- デジタル臺誌：発行年選択 ページ -->
+    <!-- 季寄せ：一句一画面ではなく「一覧スクロール方式」作品鑑賞画面 -->
+    <div id="saijikiListRoomPage" class="layer-page">
+        <div id="saijikiHaikuList" class="horizontal-scroll-container saijiki-scroll-list"></div>
+    </div>
+
+    <!-- 臺俳句：発行年選択 ページ -->
     <div id="issueYearPage" class="layer-page">
         <div id="issueYearList" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- デジタル臺誌：発行月選択 ページ -->
+    <!-- 臺俳句：発行月選択 ページ -->
     <div id="issueMonthPage" class="layer-page">
         <div id="issueMonthList" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- デジタル臺誌：号内モード選択 / 俳人一覧 ページ -->
+    <!-- 臺俳句：号内モード選択 / 俳人一覧 ページ -->
     <div id="issueDetailPage" class="layer-page">
         <div id="issueDetailContent" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- 一句一画面 スクリーン部屋 -->
+    <!-- 一句一画面 スクリーン部屋（おみ句じ・俳人鑑賞用） -->
     <div id="roomPage" class="layer-page">
         <button id="prevBtn" class="nav-arrow arrow-right" onclick="changeHaiku(-1)">＞</button> 
         <button id="nextBtn" class="nav-arrow arrow-left" onclick="changeHaiku(1)">＜</button>  
