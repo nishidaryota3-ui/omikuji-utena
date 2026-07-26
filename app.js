@@ -2,7 +2,7 @@ const SPREADSHEET_ID = '1iyBgs4Blf7gW1xIZfbxdWQJVg9OHVUU65IgJ7OjVf90';
 
 let haikuDatabase = [];
 let saijikiDict = {}; 
-let saijikiErrorMsg = ''; 
+let debugLog = []; // 診断用ログ
 let currentRoomHaikus = []; 
 let currentIndex = 0;
 let isRoomOpen = false;
@@ -87,55 +87,55 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（複数行データからの確実なデータ保護ロジック）
+// 歳時記データベースの読み込み＆詳細ログ記録
 function saijikiDataReceived(data) {
     try {
-        if (!data || !data.table) {
-            saijikiErrorMsg = 'Googleからの応答データ構造が不正です。';
-            return;
-        }
-        if (data.status === 'error') {
-            saijikiErrorMsg = `Googleエラー: ${data.errors[0].detailed_message || 'シート名が一致しない可能性があります'}`;
-            return;
-        }
-        
-        const rows = data.table.rows;
-        if (!rows || rows.length === 0) {
-            saijikiErrorMsg = '歳時記データベースシートから0件のデータが返されました。';
+        debugLog = [];
+        if (!data || !data.table || !data.table.rows) {
+            debugLog.push('エラー: Googleからのレスポンスデータが存在しません');
             return;
         }
 
+        const rows = data.table.rows;
+        debugLog.push(`取得行数: ${rows.length}行`);
+
         let dict = {};
-        let loadedCount = 0;
+        let sampleKeys = [];
 
         for (let i = 0; i < rows.length; i++) {
             const c = rows[i].c;
-            if (!c || !c[2] || c[2].v === null || c[2].v === undefined) continue;
+            if (!c) continue;
 
-            let parentKigo = String(c[2].v).trim(); // C列: 親季語
+            // C列（配列の2番目）を参照
+            let pKigoRaw = c[2] ? c[2].v : null;
+            if (pKigoRaw === null || pKigoRaw === undefined) continue;
+
+            let parentKigo = String(pKigoRaw).trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = (c[3] && c[3].v !== null && c[3].v !== undefined) ? String(c[3].v).trim() : '';   // D列: よみがな
-            let childKigos = (c[6] && c[6].v !== null && c[6].v !== undefined) ? String(c[6].v).trim() : ''; // G列: 表示用子季語
-            let desc = (c[7] && c[7].v !== null && c[7].v !== undefined) ? String(c[7].v).trim() : '';       // H列: 季語の説明
+            let kigoKana = c[3] && c[3].v !== null ? String(c[3].v).trim() : '';
+            let childKigos = c[6] && c[6].v !== null ? String(c[6].v).trim() : '';
+            let desc = c[7] && c[7].v !== null ? String(c[7].v).trim() : '';
+
+            if (sampleKeys.length < 5 && !sampleKeys.includes(parentKigo)) {
+                sampleKeys.push(parentKigo);
+            }
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
             } else {
-                // すでに親季語が存在する場合、空欄でないデータでのみ補完する（空文字での上書きを防止）
                 if (kigoKana && !dict[parentKigo].kigoKana) dict[parentKigo].kigoKana = kigoKana;
                 if (childKigos && !dict[parentKigo].childKigos) dict[parentKigo].childKigos = childKigos;
                 if (desc && !dict[parentKigo].desc) dict[parentKigo].desc = desc;
             }
-            loadedCount++;
         }
 
         saijikiDict = dict;
-        if (loadedCount === 0) {
-            saijikiErrorMsg = 'C列に親季語が見つかりませんでした。';
-        }
+        debugLog.push(`辞書登録親季語数: ${Object.keys(dict).length}件`);
+        debugLog.push(`登録サンプル: [${sampleKeys.join(', ')}]`);
+
     } catch (e) {
-        saijikiErrorMsg = `解析エラー: ${e.message}`;
+        debugLog.push(`解析時例外エラー: ${e.message}`);
     }
 }
 
@@ -351,6 +351,7 @@ function showKigoList(seasonCode, seasonName) {
     renderPage('kigoListPage');
 }
 
+// 🌸 ポップアップ表示（診断ログをそのまま表示）
 function openSaijikiKigoWithCard(kigoName) {
     currentTargetKigo = kigoName;
     let saijikiInfo = saijikiDict[kigoName];
@@ -359,14 +360,13 @@ function openSaijikiKigoWithCard(kigoName) {
     const childEl = document.getElementById('cardChildKigo');
     const descEl = document.getElementById('cardDesc');
 
-    if (saijikiErrorMsg) {
+    if (!saijikiInfo) {
         if (parentEl) parentEl.innerText = kigoName;
-        if (childEl) childEl.innerText = 'エラー発生';
-        if (descEl) descEl.innerText = `【システム診断】\n${saijikiErrorMsg}`;
-    } else if (!saijikiInfo) {
-        if (parentEl) parentEl.innerText = kigoName;
-        if (childEl) childEl.innerText = '';
-        if (descEl) descEl.innerText = `「${kigoName}」のデータが辞書に見つかりませんでした。`;
+        if (childEl) childEl.innerText = '診断モード';
+        if (descEl) {
+            let logText = debugLog.join('\n');
+            descEl.innerText = `【システム診断ログ】\n検索された季語: "${kigoName}"\n${logText}`;
+        }
     } else {
         if (parentEl) {
             if (saijikiInfo.kigoKana) {
@@ -376,7 +376,13 @@ function openSaijikiKigoWithCard(kigoName) {
             }
         }
         if (childEl) childEl.innerText = saijikiInfo.childKigos ? `子季語：${saijikiInfo.childKigos}` : '';
-        if (descEl) descEl.innerText = saijikiInfo.desc ? saijikiInfo.desc : '解説データ準備中';
+        if (descEl) {
+            if (saijikiInfo.desc) {
+                descEl.innerText = saijikiInfo.desc;
+            } else {
+                descEl.innerText = `【システム診断】\n親季語 "${kigoName}" は辞書に登録されていますが、H列（解説）が空文字（データなし）となっています。`;
+            }
+        }
     }
 
     const overlay = document.getElementById('kigoCardOverlay');
