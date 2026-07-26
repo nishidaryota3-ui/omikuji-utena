@@ -86,7 +86,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（動的列位置解析による完全保護ロジック）
+// 歳時記データベースの読み込み処理（APIの末尾省略仕様に対応した安全スキャン）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -97,28 +97,34 @@ function saijikiDataReceived(data) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
-            // セルが存在する位置と値を安全にスキャン
-            let cellValues = [];
-            for (let j = 0; j < rowCells.length; j++) {
-                let cell = rowCells[j];
-                cellValues[j] = (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v).trim() : '';
-            }
-
             // C列（インデックス2）に親季語があるか確認
-            let parentKigo = cellValues[2] || '';
+            let parentCell = rowCells[2];
+            if (!parentCell || parentCell.v === null || parentCell.v === undefined) continue;
+
+            let parentKigo = String(parentCell.v).trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = cellValues[3] || '';  // D列 (インデックス3)
-            let childKigos = cellValues[6] || ''; // G列 (インデックス6)
-            let desc = cellValues[7] || '';       // H列 (インデックス7)
+            // D列: よみがな (インデックス3)
+            let kigoKana = (rowCells[3] && rowCells[3].v) ? String(rowCells[3].v).trim() : '';
+            
+            // G列: 表示用子季語 (インデックス6)
+            let childKigos = (rowCells[6] && rowCells[6].v) ? String(rowCells[6].v).trim() : '';
+            
+            // H列: 季語の説明 (インデックス7、または届いている一番最後の要素)
+            let desc = '';
+            if (rowCells[7] && rowCells[7].v) {
+                desc = String(rowCells[7].v).trim();
+            } else if (rowCells.length > 7 && rowCells[rowCells.length - 1] && rowCells[rowCells.length - 1].v) {
+                desc = String(rowCells[rowCells.length - 1].v).trim();
+            }
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
             } else {
-                // 有効な文字列（長さ1以上）が存在する場合のみ保存し、空文字での上書きを遮断
-                if (kigoKana.length > 0) dict[parentKigo].kigoKana = kigoKana;
-                if (childKigos.length > 0) dict[parentKigo].childKigos = childKigos;
-                if (desc.length > 0) dict[parentKigo].desc = desc;
+                // 既に登録済みの親季語の場合、有効なデータが入っている時のみ保持・補完する
+                if (kigoKana && !dict[parentKigo].kigoKana) dict[parentKigo].kigoKana = kigoKana;
+                if (childKigos && !dict[parentKigo].childKigos) dict[parentKigo].childKigos = childKigos;
+                if (desc && !dict[parentKigo].desc) dict[parentKigo].desc = desc;
             }
         }
 
