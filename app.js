@@ -1,7 +1,8 @@
 const SPREADSHEET_ID = '1iyBgs4Blf7gW1xIZfbxdWQJVg9OHVUU65IgJ7OjVf90';
 
 let haikuDatabase = [];
-let saijikiDict = {}; // 歳時記データベース（解説・子季語）
+let saijikiDict = {}; 
+let saijikiErrorMsg = ''; 
 let currentRoomHaikus = []; 
 let currentIndex = 0;
 let isRoomOpen = false;
@@ -21,17 +22,14 @@ let navState = {
     isDetarame: false 
 };
 
-// スワイプ検知変数
 let touchStartX = 0;
 let touchStartY = 0;
 
 window.onload = function() {
-    // 1. 俳句集成シートの読み込み (範囲 A:L)
     const scriptHaiku = document.createElement('script');
     scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&range=A:L&tqx=responseHandler:mainDataReceived`;
     document.body.appendChild(scriptHaiku);
 
-    // 2. 歳時記データベースシートの読み込み (範囲 A:H に変更して絶対列位置を取得)
     const scriptSaijiki = document.createElement('script');
     scriptSaijiki.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('歳時記データベース')}&range=A:H&tqx=responseHandler:saijikiDataReceived`;
     document.body.appendChild(scriptSaijiki);
@@ -89,41 +87,55 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（A:Hの絶対列インデックス指定）
+// 歳時記データベースの読み込み処理（複数行データからの確実なデータ保護ロジック）
 function saijikiDataReceived(data) {
     try {
-        if (!data || !data.table || !data.table.rows) return;
+        if (!data || !data.table) {
+            saijikiErrorMsg = 'Googleからの応答データ構造が不正です。';
+            return;
+        }
+        if (data.status === 'error') {
+            saijikiErrorMsg = `Googleエラー: ${data.errors[0].detailed_message || 'シート名が一致しない可能性があります'}`;
+            return;
+        }
+        
         const rows = data.table.rows;
+        if (!rows || rows.length === 0) {
+            saijikiErrorMsg = '歳時記データベースシートから0件のデータが返されました。';
+            return;
+        }
+
         let dict = {};
+        let loadedCount = 0;
 
         for (let i = 0; i < rows.length; i++) {
             const c = rows[i].c;
             if (!c || !c[2] || c[2].v === null || c[2].v === undefined) continue;
 
-            let parentKigo = String(c[2].v).trim(); // C列: 親季語 (c[2])
+            let parentKigo = String(c[2].v).trim(); // C列: 親季語
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = (c[3] && c[3].v) ? String(c[3].v).trim() : '';   // D列: 親季語よみがな (c[3])
-            let childKigos = (c[6] && c[6].v) ? String(c[6].v).trim() : ''; // G列: 表示用子季語 (c[6])
-            let desc = (c[7] && c[7].v) ? String(c[7].v).trim() : '';       // H列: 季語の説明 (c[7])
+            let kigoKana = (c[3] && c[3].v !== null && c[3].v !== undefined) ? String(c[3].v).trim() : '';   // D列: よみがな
+            let childKigos = (c[6] && c[6].v !== null && c[6].v !== undefined) ? String(c[6].v).trim() : ''; // G列: 表示用子季語
+            let desc = (c[7] && c[7].v !== null && c[7].v !== undefined) ? String(c[7].v).trim() : '';       // H列: 季語の説明
 
             if (!dict[parentKigo]) {
-                dict[parentKigo] = {
-                    parentKigo: parentKigo,
-                    kigoKana: kigoKana,
-                    childKigos: childKigos,
-                    desc: desc
-                };
+                dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
             } else {
-                // 同じ親季語が複数行ある場合、文字が入っている行のデータを保持（空文字で上書きしない）
+                // すでに親季語が存在する場合、空欄でないデータでのみ補完する（空文字での上書きを防止）
                 if (kigoKana && !dict[parentKigo].kigoKana) dict[parentKigo].kigoKana = kigoKana;
                 if (childKigos && !dict[parentKigo].childKigos) dict[parentKigo].childKigos = childKigos;
                 if (desc && !dict[parentKigo].desc) dict[parentKigo].desc = desc;
             }
+            loadedCount++;
         }
+
         saijikiDict = dict;
+        if (loadedCount === 0) {
+            saijikiErrorMsg = 'C列に親季語が見つかりませんでした。';
+        }
     } catch (e) {
-        console.error('歳時記マスター解析エラー:', e);
+        saijikiErrorMsg = `解析エラー: ${e.message}`;
     }
 }
 
@@ -267,7 +279,6 @@ function jumpToAuthorRoom(author) {
     openRoom('author', author, author);
 }
 
-// 🔍 季語検索機能
 function handleKigoSearch() {
     const input = document.getElementById('kigoSearchInput');
     const resultsContainer = document.getElementById('searchResults');
@@ -340,7 +351,6 @@ function showKigoList(seasonCode, seasonName) {
     renderPage('kigoListPage');
 }
 
-// 🌸 ポップアップ表示
 function openSaijikiKigoWithCard(kigoName) {
     currentTargetKigo = kigoName;
     let saijikiInfo = saijikiDict[kigoName];
@@ -349,10 +359,14 @@ function openSaijikiKigoWithCard(kigoName) {
     const childEl = document.getElementById('cardChildKigo');
     const descEl = document.getElementById('cardDesc');
 
-    if (!saijikiInfo) {
+    if (saijikiErrorMsg) {
+        if (parentEl) parentEl.innerText = kigoName;
+        if (childEl) childEl.innerText = 'エラー発生';
+        if (descEl) descEl.innerText = `【システム診断】\n${saijikiErrorMsg}`;
+    } else if (!saijikiInfo) {
         if (parentEl) parentEl.innerText = kigoName;
         if (childEl) childEl.innerText = '';
-        if (descEl) descEl.innerText = '解説データ準備中';
+        if (descEl) descEl.innerText = `「${kigoName}」のデータが辞書に見つかりませんでした。`;
     } else {
         if (parentEl) {
             if (saijikiInfo.kigoKana) {
