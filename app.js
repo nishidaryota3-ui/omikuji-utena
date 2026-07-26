@@ -89,7 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（複数行に渡る親季語のデータを正しく集約）
+// 歳時記データベースの読み込み処理（C〜H列の範囲インデックスを精密補正）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -100,12 +100,12 @@ function saijikiDataReceived(data) {
             const c = rows[i].c;
             if (!c || !c[0] || !c[0].v) continue;
 
-            let parentKigo = String(c[0].v).trim(); // C列: 親季語
+            let parentKigo = String(c[0].v).trim(); // C列: 親季語 (配列位置 0)
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = c[1] && c[1].v ? String(c[1].v).trim() : ''; // D列: 親季語よみがな
-            let childKigos = c[4] && c[4].v ? String(c[4].v).trim() : ''; // G列: 表示用子季語
-            let desc = c[5] && c[5].v ? String(c[5].v).trim() : ''; // H列: 季語の説明
+            let kigoKana = c[1] && c[1].v ? String(c[1].v).trim() : '';   // D列: 親季語よみがな (配列位置 1)
+            let childKigos = c[4] && c[4].v ? String(c[4].v).trim() : ''; // G列: 表示用子季語 (配列位置 4)
+            let desc = c[5] && c[5].v ? String(c[5].v).trim() : '';       // H列: 季語の説明 (配列位置 5)
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = {
@@ -115,7 +115,7 @@ function saijikiDataReceived(data) {
                     desc: desc
                 };
             } else {
-                // 既存の親季語があれば、よみがな・G列（子季語）・H列（説明）が入っている行の値を採用
+                // 複数行にまたがる場合、値が入っている行のデータで補完
                 if (!dict[parentKigo].kigoKana && kigoKana) dict[parentKigo].kigoKana = kigoKana;
                 if (!dict[parentKigo].childKigos && childKigos) dict[parentKigo].childKigos = childKigos;
                 if (!dict[parentKigo].desc && desc) dict[parentKigo].desc = desc;
@@ -267,7 +267,7 @@ function jumpToAuthorRoom(author) {
     openRoom('author', author, author);
 }
 
-// 🔍 季語検索機能（入力中の誤作動防止）
+// 🔍 季語検索機能（入力中の誤作動防止対応）
 function handleKigoSearch() {
     const input = document.getElementById('kigoSearchInput');
     const resultsContainer = document.getElementById('searchResults');
@@ -520,7 +520,6 @@ function openRoom(type, targetValue, displayName) {
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 function changeHaiku(direction) { if (currentIndex + direction >= 0 && currentIndex + direction < currentRoomHaikus.length) { currentIndex += direction; updateHaikuDisplay(); } }
 
-// ℹ️ 右上インフォメーションの表記変更： 季語（詳細季節） 形式にする
 function revealHiddenInfo() {
     infoRevealed = true; 
     const infoTrigger = document.getElementById('infoTrigger');
@@ -542,7 +541,6 @@ function revealHiddenInfo() {
     updateBreadcrumb();
 }
 
-// 右上情報表示の更新ロジック
 function updateHaikuDisplay() {
     const currentHaiku = currentRoomHaikus[currentIndex];
     if (!currentHaiku) return;
@@ -612,9 +610,7 @@ function initSwipeEvents() {
     }, { passive: true });
 }
 
-// ⌨️ キーボード入力中のショートカット制御
 document.addEventListener('keydown', function(event) {
-    // 検索入力欄にフォーカスがある場合はショートカットを無効化
     const activeEl = document.activeElement;
     if (activeEl && activeEl.tagName === 'INPUT') {
         return;
