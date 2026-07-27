@@ -89,6 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
+// 🌸 歳時記データ受信処理（G列＝子季語、H列＝解説を直接ピンポイント取得）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -99,25 +100,21 @@ function saijikiDataReceived(data) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
+            // C列（3列目・インデックス2）：親季語
             let parentVal = rowCells[2] ? (rowCells[2].v !== undefined ? rowCells[2].v : rowCells[2].f) : null;
             if (parentVal === null || parentVal === undefined) continue;
 
             let parentKigo = String(parentVal).replace(/[\s\u3000]+/g, '').trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
+            // D列（4列目・インデックス3）：かな
             let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
+            
+            // G列（7列目・インデックス6）：子季語
             let childKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
             
-            let desc = '';
-            for (let j = 2; j < rowCells.length; j++) {
-                if (rowCells[j] && (rowCells[j].v || rowCells[j].f)) {
-                    let text = String(rowCells[j].v || rowCells[j].f).trim();
-                    if (text.length > 10) {
-                        desc = text;
-                        break;
-                    }
-                }
-            }
+            // H列（8列目・インデックス7）：解説文（文字数自動判定ではなく厳密に指定）
+            let desc = rowCells[7] && (rowCells[7].v || rowCells[7].f) ? String(rowCells[7].v || rowCells[7].f).trim() : '';
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
@@ -153,7 +150,7 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 【完全分離・優先処理】縦線ルールを自動判定より前に100%強制適用するルビ関数
+// 🌸 ルビ変換処理
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
@@ -161,14 +158,12 @@ function formatRubyText(text) {
     // 全角「｜」を半角「|」に統一
     str = str.replace(/｜/g, '|');
 
-    // STEP 1: 「|」がある箇所を最優先で処理（文字種を問わず | から 《》 の手前までを確実にルビ化）
-    // 例: 水|平《たい》ら ➔ 「平」だけにルビ
-    // 例: |灯りヶ原《あかりがはら》 ➔ 「灯りヶ原」全文字にルビ
+    // STEP 1: 「|」指定を最優先処理
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // STEP 2: 「|」がない場合のみ、自動判定（《》の直前にある漢字のみを抽出）を実行
+    // STEP 2: 自動判定処理
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
@@ -483,7 +478,7 @@ function showIssueMonthList(year) {
         let issueNo = monthMap[month];
         let kanjiMonth = toKanjiMonth(month);
         let label = issueNo ? `${kanjiMonth}（第${issueNo}号）` : `${kanjiMonth}`;
-        const el = document.createElement('div');
+        const el = document.getElementById('div');
         el.className = 'vertical-link';
         el.innerText = label;
         el.onclick = function() { showIssueDetailPage(year, month); };
