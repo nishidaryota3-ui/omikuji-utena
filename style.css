@@ -38,10 +38,10 @@ body, html {
 /* 季寄せ（季節選択）：スクロールなしで1画面にすっきり収めるコンテナ */
 #saijikiPage .fits-screen-container { 
     display: flex; flex-direction: row-reverse; justify-content: center; align-items: center;
-    gap: clamp(1.2rem, 4vw, 2.8rem); width: 100%; height: 50vh; margin-top: 20px;
+    gap: clamp(1.2rem, 4vw, 2.8rem); width: 100%; height: 50vh; margin-top: 30px;
 }
 
-/* 🌸 横一列スクロールコンテナ（端の隠れ防止修正） */
+/* 🌸 横一列スクロールコンテナ */
 .horizontal-scroll-container {
     display: flex; 
     flex-direction: row-reverse; 
@@ -52,7 +52,7 @@ body, html {
     overflow-x: auto; 
     overflow-y: hidden; 
     scroll-behavior: smooth;
-    padding: 0 5vw; /* 左右に十分な余白を確保して隠れを防止 */
+    padding: 0 5vw;
     margin: auto !important;
     max-width: 100% !important;
 }
@@ -60,7 +60,7 @@ body, html {
 #kigoList { gap: 1.8rem !important; }
 #haijinList { gap: 3.5rem; }
 
-/* 臺俳句の号内俳人リンク（入力順・適度なスペース） */
+/* 臺俳句の号内俳人リンク */
 .utena-author-link { margin-left: clamp(2.0rem, 4.5vw, 3.5rem); }
 
 .horizontal-scroll-container::-webkit-scrollbar { height: 6px; }
@@ -80,9 +80,10 @@ body, html {
 .phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
 .phrase rt { font-size: 0.45em; letter-spacing: 0.1em; color: #555555; }
 
-/* 🔍 季語検索ボックス */
+/* 🔍 季語検索ボックス ＆ 検索ボックス下の半分の長さの区切り線 */
 .saijiki-search-box {
     position: relative; width: clamp(260px, 60vw, 420px); margin-top: -20px; z-index: 40;
+    display: flex; flex-direction: column; align-items: center;
 }
 .saijiki-search-box input {
     width: 100%; padding: 8px 16px; border: 1px solid #d0c8b8; border-radius: 20px;
@@ -90,6 +91,11 @@ body, html {
     outline: none; text-align: center; transition: border-color 0.2s, background 0.2s;
 }
 .saijiki-search-box input:focus { border-color: #8c8476; background: #ffffff; }
+
+/* 🌸 検索ボックスの下にしっかりスペースを空けた、検索ボックスの「半分の長さ」の線 */
+.search-divider {
+    width: 50%; height: 1px; background-color: #d0c8b8; margin-top: 25px; opacity: 0.7;
+}
 
 .search-results-dropdown {
     position: absolute; top: 110%; left: 0; width: 100%; max-height: 220px;
@@ -105,7 +111,7 @@ body, html {
 .search-child { font-size: 0.8rem; color: #888888; margin-left: 8px; }
 .search-item-none { padding: 12px; font-size: 0.85rem; color: #888888; text-align: center; }
 
-/* 🌸 季語解説ポップアップカード (縦書き配列) */
+/* 🌸 季語解説ポップアップカード */
 .card-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);
@@ -127,15 +133,18 @@ body, html {
 .child-kigo-col { font-size: 1.05rem; color: #555555; margin-top: 2rem; }
 .desc-kigo-col { font-size: 0.95rem; color: #333333; line-height: 1.8; margin-top: 4rem; }
 
-/* 📜 季寄せ作品一覧スクロール画面 */
-.saijiki-scroll-list { gap: 3.5rem !important; }
+/* 📜 季寄せ作品一覧スクロール画面（中央揃え＆作品追加対応スクロール） */
+.saijiki-scroll-list { 
+    gap: 3.5rem !important; 
+    padding: 0 10vw !important;
+}
 .saijiki-haiku-card { display: flex; flex-direction: row-reverse; gap: 1.2rem; align-items: center; }
 .saijiki-phrase { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 1.35rem; letter-spacing: 0.25em; line-height: 1.4; color: #2b2b2b; }
 .saijiki-phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
 .saijiki-phrase rt { font-size: 0.45em; color: #666666; }
 .saijiki-author { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 0.95rem; letter-spacing: 0.2em; color: #777777; margin-top: 3rem; }
 
-/* 🧭 グローバルヘッダー（パンくず上段 ＋ 右上情報下段） */
+/* 🧭 グローバルヘッダー */
 .global-header-area {
     position: absolute; top: calc(15px + env(safe-area-inset-top)); left: 20px; right: 20px;
     display: flex; flex-direction: column; gap: 8px; z-index: 30; pointer-events: none;
