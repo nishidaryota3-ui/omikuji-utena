@@ -44,32 +44,36 @@ function mainDataReceived(data) {
 
         for (let i = 0; i < rows.length; i++) {
             const c = rows[i].c;
-            if (!c || !c[0] || !c[0].v) continue;
+            if (!c || !c[0]) continue;
             
-            let phraseStr = String(c[0].v).trim();
+            // スプレッドシートの生データを優先取得（Googleによる勝手な装飾・縦線消去を回避）
+            let rawVal = (c[0].v !== undefined && c[0].v !== null) ? c[0].v : c[0].f;
+            if (!rawVal) continue;
+            
+            let phraseStr = String(rawVal).trim();
             if (phraseStr === '俳句' || phraseStr === '句' || phraseStr === '') continue;
 
-            let cleanSeason = c[6] && c[6].v ? String(c[6].v).trim().toLowerCase() : '';
+            let cleanSeason = c[6] && (c[6].v || c[6].f) ? String(c[6].v || c[6].f).trim().toLowerCase() : '';
             if (cleanSeason === 'sinnen') cleanSeason = 'shinnen';
             if (cleanSeason === 'fuyu') cleanSeason = 'huyu';
             if (cleanSeason === 'season' || cleanSeason === '季節') continue;
 
-            let customKigo = c[8] && c[8].v ? String(c[8].v).trim() : '';
-            let rawKigo = c[3] && c[3].v ? String(c[3].v).trim() : '';
+            let customKigo = c[8] && (c[8].v || c[8].f) ? String(c[8].v || c[8].f).trim() : '';
+            let rawKigo = c[3] && (c[3].v || c[3].f) ? String(c[3].v || c[3].f).trim() : '';
             let finalKigo = customKigo || rawKigo;
 
             freshDatabase.push({
                 phrase: phraseStr,      
-                author: c[1] && c[1].v ? String(c[1].v).trim() : '作者不詳',      
-                authorKana: c[2] && c[2].v ? String(c[2].v).trim() : '',  
+                author: c[1] && (c[1].v || c[1].f) ? String(c[1].v || c[1].f).trim() : '作者不詳',      
+                authorKana: c[2] && (c[2].v || c[2].f) ? String(c[2].v || c[2].f).trim() : '',  
                 kigo: finalKigo,        
-                parentKigo: c[4] && c[4].v ? String(c[4].v).trim() : '',  
-                kigoKana: c[5] && c[5].v ? String(c[5].v).trim() : '',    
+                parentKigo: c[4] && (c[4].v || c[4].f) ? String(c[4].v || c[4].f).trim() : '',  
+                kigoKana: c[5] && (c[5].v || c[5].f) ? String(c[5].v || c[5].f).trim() : '',    
                 season: cleanSeason,                                      
-                detailSeason: c[7] && c[7].v ? String(c[7].v).trim() : '',
-                issueYear: c[9] && c[9].v ? String(c[9].v).trim() : '',  
-                issueMonth: c[10] && c[10].v ? String(c[10].v).trim() : '', 
-                issueNumber: c[11] && c[11].v ? String(c[11].v).trim() : '' 
+                detailSeason: c[7] && (c[7].v || c[7].f) ? String(c[7].v || c[7].f).trim() : '',
+                issueYear: c[9] && (c[9].v || c[9].f) ? String(c[9].v || c[9].f).trim() : '',  
+                issueMonth: c[10] && (c[10].v || c[10].f) ? String(c[10].v || c[10].f).trim() : '', 
+                issueNumber: c[11] && (c[11].v || c[11].f) ? String(c[11].v || c[11].f).trim() : '' 
             });
         }
 
@@ -96,19 +100,19 @@ function saijikiDataReceived(data) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
-            let parentVal = rowCells[2] ? rowCells[2].v : null;
+            let parentVal = rowCells[2] ? (rowCells[2].v !== undefined ? rowCells[2].v : rowCells[2].f) : null;
             if (parentVal === null || parentVal === undefined) continue;
 
             let parentKigo = String(parentVal).replace(/[\s\u3000]+/g, '').trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            let kigoKana = rowCells[3] && rowCells[3].v ? String(rowCells[3].v).trim() : '';
-            let childKigos = rowCells[6] && rowCells[6].v ? String(rowCells[6].v).trim() : '';
+            let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
+            let childKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
             
             let desc = '';
             for (let j = 2; j < rowCells.length; j++) {
-                if (rowCells[j] && rowCells[j].v) {
-                    let text = String(rowCells[j].v).trim();
+                if (rowCells[j] && (rowCells[j].v || rowCells[j].f)) {
+                    let text = String(rowCells[j].v || rowCells[j].f).trim();
                     if (text.length > 10) {
                         desc = text;
                         break;
@@ -140,7 +144,7 @@ function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
-    if (y === 2024) return '令和六';
+    if (y === 2024) return '令和六年';
     return `${y}年`;
 }
 
@@ -150,20 +154,21 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 改修版ルビ変換処理（全角縦線をまず半角化し、青空文庫形式を確実にルビ置換）
+// 🌸 完全安定版ルビ処理（生データ保持＆両対応変換）
 function formatRubyText(text) {
     if (!text) return '';
+    let str = String(text);
     
-    // 全角「｜」を一度すべて半角「|」に統一
-    let normalized = text.replace(/｜/g, '|');
+    // 1. 全角縦線「｜」および特殊記号の正規化
+    str = str.replace(/｜/g, '|');
     
-    // 1. |漢字《ルビ》 のパターン（明示指定）
-    normalized = normalized.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 2. |漢字《ルビ》 または |漢字(ルビ) の明示置換（｜から《》直前までを完全に範囲指定）
+    str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
-    // 2. |がない場合：《》直前の漢字のみを自動抽出
-    normalized = normalized.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 3. |がない場合：《》直前の漢字群（ひらがな・記号等で途切れる手前まで）を自動抽出
+    str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
-    return normalized;
+    return str;
 }
 
 function launchOmikuji() {
