@@ -153,25 +153,25 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 【万能版ルビ処理】《漢字:ルビ》 / ｜漢字《ルビ》 / 漢字《ルビ》 すべてに対応
+// 🌸 【縦書き干渉防止対策済み】ルビ変換処理
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
 
-    // 1. 最優先：《対象文字:ルビ》 または 《対象文字：ルビ》 のパターン（全角・半角コロン両対応）
+    // 1. コロン明示指定：《漢字:ルビ》 または 《漢字：ルビ》
     str = str.replace(/[《（(]([^:：》）)]+)[:：]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
+        return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // 2. 縦線指定： ｜漢字《ルビ》 または |漢字《ルビ》
+    // 2. 縦線明示指定：｜漢字《ルビ》 または |漢字《ルビ》
     str = str.replace(/｜/g, '|');
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
+        return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // 3. 自動判定： 漢字《ルビ》
+    // 3. 自動漢字抽出指定：漢字《ルビ》
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
+        return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
     return str;
