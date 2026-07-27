@@ -172,3 +172,8 @@ body, html {
 }
 .fixed-cat-trigger:hover { transform: scale(1.05); opacity: 1; }
 .fixed-cat-trigger.hidden { display: none !important; }
+
+/* 🌸 臺俳句：選択ボタンの間隔拡張 */
+.utena-mode-btn {
+    margin: 0 45px !important;
+}
