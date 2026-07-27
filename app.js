@@ -153,22 +153,22 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 【最優先修正】縦線指定（全角・半角）を絶対に最優先でHTML化する完全ロジック
+// 🌸 ルビ置換ロジック（HTMLタグで明確に保護）
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
 
-    // 1. まず全角縦線「｜」を半角「|」に統一
+    // 1. 全角縦線「｜」を半角「|」に統一
     str = str.replace(/｜/g, '|');
 
-    // 2. 最優先：縦線 | がある場合、| から 《》 直前までのすべての文字（漢字・ひらがな・カタカナ問わず）を絶対範囲としてルビ化
+    // 2. 縦線 | がある場合：| から 《》 直前までのすべての文字を独立したrubyタグで囲む
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby>';
+        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // 3. 縦線がない場合： 《》 直前にある漢字の連続のみを自動抽出してルビ化
+    // 3. 縦線がない場合：《》直前にある漢字のみを自動抽出して独立したrubyタグで囲む
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby>';
+        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
     return str;
