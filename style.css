@@ -1,5 +1,5 @@
 /* ==========================================
-   UTENA 俳句データベース - 基本スタイル
+   UTENA 俳句データベース - 完全復元スタイル
    ========================================== */
 
 * {
@@ -113,6 +113,14 @@ body, html {
 
 .vertical-link:hover {
     opacity: 0.6;
+}
+
+/* 臺俳句アーカイブ用ボタン */
+.utena-mode-btn {
+    border: 1px solid #ccc;
+    padding: 15px 10px;
+    border-radius: 4px;
+    background: #fff;
 }
 
 /* --- 句表示エリア（Room Page） --- */
@@ -321,8 +329,31 @@ body, html {
     font-family: sans-serif;
 }
 
+.search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.search-parent {
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.search-child {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.search-item-none {
+    padding: 10px;
+    color: #999;
+    font-size: 0.9rem;
+}
+
 /* --- 🌸 縦書き表示での前文字巻き込み防止指定 --- */
-.ruby-block {
+.ruby-block,
+.ruby-wrap {
     display: inline-block;
     writing-mode: vertical-rl;
     vertical-align: top;
