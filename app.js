@@ -46,7 +46,6 @@ function mainDataReceived(data) {
             const c = rows[i].c;
             if (!c || !c[0]) continue;
             
-            // スプレッドシートの生データを優先取得（Googleによる勝手な装飾・縦線消去を回避）
             let rawVal = (c[0].v !== undefined && c[0].v !== null) ? c[0].v : c[0].f;
             if (!rawVal) continue;
             
@@ -154,20 +153,24 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 完全安定版ルビ処理（生データ保持＆両対応変換）
+// 🌸 【最優先修正】縦線指定（全角・半角）を絶対に最優先でHTML化する完全ロジック
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
-    
-    // 1. 全角縦線「｜」および特殊記号の正規化
+
+    // 1. まず全角縦線「｜」を半角「|」に統一
     str = str.replace(/｜/g, '|');
-    
-    // 2. |漢字《ルビ》 または |漢字(ルビ) の明示置換（｜から《》直前までを完全に範囲指定）
-    str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
-    
-    // 3. |がない場合：《》直前の漢字群（ひらがな・記号等で途切れる手前まで）を自動抽出
-    str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
-    
+
+    // 2. 最優先：縦線 | がある場合、| から 《》 直前までのすべての文字（漢字・ひらがな・カタカナ問わず）を絶対範囲としてルビ化
+    str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
+        return '<ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby>';
+    });
+
+    // 3. 縦線がない場合： 《》 直前にある漢字の連続のみを自動抽出してルビ化
+    str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
+        return '<ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby>';
+    });
+
     return str;
 }
 
