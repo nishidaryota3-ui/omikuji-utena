@@ -200,17 +200,18 @@ function updateBreadcrumb() {
     } else if (navState.category === 'utena_archive') {
         html += ` <span class="separator">&lt;</span> <span class="link" onclick="showIssueYearList()">臺俳句</span>`;
         if (navState.issueYear) {
-            if (navState.currentLayer === 'issueMonthPage' || navState.currentLayer === 'issueDetailPage' || navState.currentLayer === 'roomPage') {
+            if (navState.currentLayer === 'issueMonthPage' || navState.currentLayer === 'issueDetailPage' || navState.currentLayer === 'utenaAuthorListPage' || navState.currentLayer === 'roomPage' || navState.currentLayer === 'saijikiListRoomPage') {
                 html += ` <span class="separator">&lt;</span> <span class="link" onclick="showIssueMonthList('${navState.issueYear}')">${toJapaneseEra(navState.issueYear)}</span>`;
             }
         }
         if (navState.issueMonth) {
             let monthLabel = `${toKanjiMonth(navState.issueMonth)}`;
-            if (navState.currentLayer === 'issueDetailPage' || navState.currentLayer === 'roomPage') {
+            if (navState.currentLayer === 'utenaAuthorListPage' || navState.currentLayer === 'roomPage' || navState.currentLayer === 'saijikiListRoomPage') {
                 html += ` <span class="separator">&lt;</span> <span class="link" onclick="showIssueDetailPage('${navState.issueYear}', '${navState.issueMonth}')">${monthLabel}</span>`;
             }
         }
-        if (navState.currentLayer === 'roomPage' && navState.authorName) {
+        if (navState.currentLayer === 'saijikiListRoomPage' && navState.authorName) {
+            html += ` <span class="separator">&lt;</span> <span class="link" onclick="showUtenaAuthorListPage()">俳人別</span>`;
             html += ` <span class="separator">&lt;</span> <span class="current">${navState.authorName}</span>`;
         }
     }
@@ -461,7 +462,7 @@ function showIssueMonthList(year) {
     renderPage('issueMonthPage');
 }
 
-// 🌸 臺俳句：号内（月別）作品・俳人一覧表示の修正
+// 🌸 臺俳句：号内（月別）選択画面（「全句」と「俳人別」の2項目へ整理）
 function showIssueDetailPage(year, month) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = month;
@@ -472,11 +473,10 @@ function showIssueDetailPage(year, month) {
 
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === year && item.issueMonth === month);
 
-    // 1. 「おみ句じ（全作品）」ボタン（表記変更）
+    // 1. 「全句」項目（旧：おみ句じ全作品）
     const allBtn = document.createElement('div');
     allBtn.className = 'vertical-link';
-    allBtn.style.fontWeight = 'bold';
-    allBtn.innerText = 'おみ句じ（全作品）';
+    allBtn.innerText = '全句';
     allBtn.onclick = function() {
         navState.authorName = '';
         currentDisplayType = 'issue_all';
@@ -488,7 +488,28 @@ function showIssueDetailPage(year, month) {
     };
     container.appendChild(allBtn);
 
-    // 2. スプレッドシートの掲載順（入力順）そのまま保持して重複排除
+    // 2. 「俳人別」項目
+    const haijinBtn = document.createElement('div');
+    haijinBtn.className = 'vertical-link';
+    haijinBtn.innerText = '俳人別';
+    haijinBtn.onclick = function() {
+        showUtenaAuthorListPage();
+    };
+    container.appendChild(haijinBtn);
+
+    container.style.justifyContent = 'center';
+    renderPage('issueDetailPage');
+}
+
+// 🌸 臺俳句：号内の「俳人別」執筆者一覧画面
+function showUtenaAuthorListPage() {
+    const container = document.getElementById('utenaAuthorList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth);
+
+    // スプレッドシートの掲載順（入力順）そのまま保持して重複排除
     let orderedAuthors = [];
     issueHaikus.forEach(item => {
         if (item.author && !orderedAuthors.includes(item.author)) {
@@ -496,25 +517,46 @@ function showIssueDetailPage(year, month) {
         }
     });
 
-    // 3. 俳人別リンクを追加（おみ句じ・俳人と同じスクロールレイアウト）
     orderedAuthors.forEach(author => {
         const el = document.createElement('div');
         el.className = 'vertical-link';
         el.innerText = author;
         el.onclick = function() {
-            navState.authorName = author;
-            currentDisplayType = 'issue_author';
-            currentRoomHaikus = issueHaikus.filter(item => item.author === author);
-            currentIndex = 0;
-            renderPage('roomPage');
-            updateHaikuDisplay();
+            showUtenaAuthorWorks(author);
         };
         container.appendChild(el);
     });
 
-    // 左詰め配置で端まで横スクロール可能に
-    container.style.justifyContent = 'flex-start';
-    renderPage('issueDetailPage');
+    container.style.justifyContent = (orderedAuthors.length > 5) ? 'flex-start' : 'center';
+    renderPage('utenaAuthorListPage');
+}
+
+// 🌸 臺俳句：特定の俳人の全作品をスプレッドシート順（連作）で縦書き一覧表示
+function showUtenaAuthorWorks(author) {
+    navState.authorName = author;
+    let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth && item.author === author);
+
+    const container = document.getElementById('saijikiHaikuList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (issueHaikus.length === 0) {
+        alert('作品が見つかりませんでした。');
+        return;
+    }
+
+    // スプレッドシートの掲載順通りに並べる（shuffleはしない）
+    issueHaikus.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'saijiki-haiku-card utena-work-card';
+        card.innerHTML = `
+            <div class="saijiki-phrase utena-phrase">${formatRubyText(item.phrase)}</div>
+            <div class="utena-work-no">${idx + 1}</div>
+        `;
+        container.appendChild(card);
+    });
+
+    renderPage('saijikiListRoomPage');
 }
 
 function openRoom(type, targetValue, displayName) {
