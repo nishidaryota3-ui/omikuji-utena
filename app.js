@@ -35,7 +35,6 @@ window.onload = function() {
 
     initSwipeEvents();
 
-    // 通信待機に関わらずローディングを確実に消すセーフティ
     setTimeout(hideLoadingOverlay, 500);
 };
 
