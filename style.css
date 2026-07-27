@@ -79,7 +79,7 @@ body, html {
 .phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
 .phrase rt { font-size: 0.45em; letter-spacing: 0.1em; color: #555555; }
 
-/* 🔍 季語検索ボックス ＆ 検索ボックス下の半分の長さの単一区切り線 */
+/* 🔍 季語検索ボックス ＆ 区切り線 */
 .saijiki-search-box {
     position: relative; width: clamp(260px, 60vw, 420px); margin-top: -20px; z-index: 40;
     display: flex; flex-direction: column; align-items: center;
@@ -91,12 +91,12 @@ body, html {
 }
 .saijiki-search-box input:focus { border-color: #8c8476; background: #ffffff; }
 
-/* 🌸 検索ボックスの下にしっかりスペースを空けた、検索ボックスの「半分の長さ」の線（1本のみ） */
+/* 元の区切り線 */
 .search-divider {
-    width: 50%;
+    width: 100%;
     height: 1px;
     background-color: #d0c8b8;
-    margin-top: 30px;
+    margin-top: 20px;
     opacity: 0.7;
 }
 
