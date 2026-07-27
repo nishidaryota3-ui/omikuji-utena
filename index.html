@@ -9,8 +9,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="臺俳句">
-    <meta name="application-name" content="臺俳句">
+    <meta name="apple-mobile-web-app-title" content="うてな俳句">
+    <meta name="application-name" content="うてな俳句">
     <meta name="theme-color" content="#faf9f6">
     
     <!-- アプリアイコン指定 -->
@@ -22,7 +22,7 @@
 </head>
 <body>
 
-    <div id="loadingOverlay">臺俳句を開いています...</div>
+    <div id="loadingOverlay">うてな俳句を開いています...</div>
 
     <!-- 🐾 おみ句じ猫ボタン -->
     <img id="fixedCatBtn" src="omikuji-cat.png" alt="おみ句じを引く" class="fixed-cat-trigger hidden" onclick="triggerInstantOmikuji()" title="おみ句じを引く">
@@ -64,9 +64,9 @@
             <div class="vertical-link main-headline" onclick="navigateTo('saijikiPage')">季寄せ</div>
         </div>
 
-        <!-- 臺俳句 ブロック -->
+        <!-- うてな俳句 ブロック（ひらがな表記に変更） -->
         <div class="menu-block">
-            <div class="vertical-link main-headline" onclick="showIssueYearList()">臺俳句</div>
+            <div class="vertical-link main-headline" onclick="showIssueYearList()">うてな俳句</div>
         </div>
     </div>
 
@@ -89,10 +89,11 @@
 
     <!-- 季寄せ：季節一覧 ページ -->
     <div id="saijikiPage" class="layer-page">
-        <!-- 🔍 季語検索エリア -->
+        <!-- 🔍 季語検索エリア ＋ 区切り線 -->
         <div class="saijiki-search-box">
             <input type="text" id="kigoSearchInput" placeholder="季語を検索（例：春の夕）" oninput="handleKigoSearch()">
             <div id="searchResults" class="search-results-dropdown hidden"></div>
+            <div class="search-divider"></div>
         </div>
 
         <div class="fits-screen-container">
@@ -125,12 +126,12 @@
         <div id="issueMonthList" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- 臺俳句：号内選択 ページ（おみ句じ（全句） / 俳人別） -->
+    <!-- 臺俳句：号内選択 ページ -->
     <div id="issueDetailPage" class="layer-page">
         <div id="issueDetailContent" class="horizontal-scroll-container"></div>
     </div>
 
-    <!-- 臺俳句：号内 俳人一覧 ページ（★ここを修正） -->
+    <!-- 臺俳句：号内 俳人一覧 ページ -->
     <div id="utenaAuthorListPage" class="layer-page">
         <div id="utenaAuthorList" class="horizontal-scroll-container"></div>
     </div>
