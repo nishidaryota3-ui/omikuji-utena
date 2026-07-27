@@ -89,7 +89,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 🌸 歳時記データ受信処理（G列＝子季語、H列＝解説を直接ピンポイント取得）
+// 🌸 歳時記データ受信処理
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -100,20 +100,14 @@ function saijikiDataReceived(data) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
-            // C列（3列目・インデックス2）：親季語
             let parentVal = rowCells[2] ? (rowCells[2].v !== undefined ? rowCells[2].v : rowCells[2].f) : null;
             if (parentVal === null || parentVal === undefined) continue;
 
             let parentKigo = String(parentVal).replace(/[\s\u3000]+/g, '').trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            // D列（4列目・インデックス3）：かな
             let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
-            
-            // G列（7列目・インデックス6）：子季語
             let childKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
-            
-            // H列（8列目・インデックス7）：解説文（文字数自動判定ではなく厳密に指定）
             let desc = rowCells[7] && (rowCells[7].v || rowCells[7].f) ? String(rowCells[7].v || rowCells[7].f).trim() : '';
 
             if (!dict[parentKigo]) {
@@ -155,15 +149,12 @@ function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
 
-    // 全角「｜」を半角「|」に統一
     str = str.replace(/｜/g, '|');
 
-    // STEP 1: 「|」指定を最優先処理
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // STEP 2: 自動判定処理
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
@@ -277,21 +268,44 @@ function renderPage(pageId) {
 function navigateTo(pageId) { renderPage(pageId); }
 function getSeasonCode(name) { const map = {'春':'haru', '夏':'natsu', '秋':'aki', '冬':'huyu', '新年':'shinnen', '無季':'muki'}; return map[name] || ''; }
 
+// 🌸 【修正箇所】あいうえお順（かなソート）＆ 端っこ切れ防止レイアウト対応
 function createHaijinList() {
     const container = document.getElementById('haijinList'); 
     if (!container) return;
     container.innerHTML = '';
 
     let authorMap = {};
-    haikuDatabase.forEach(item => { if (!authorMap[item.author]) authorMap[item.author] = item.authorKana || item.author; });
+    haikuDatabase.forEach(item => { 
+        if (item.author && item.author !== '作者不詳') {
+            if (!authorMap[item.author]) {
+                authorMap[item.author] = item.authorKana || item.author; 
+            }
+        }
+    });
+
     let uniqueAuthors = Object.keys(authorMap);
-    uniqueAuthors.sort((a, b) => authorMap[a].localeCompare(authorMap[b], 'ja'));
+    
+    // あいうえお順（五十音順）にソート
+    uniqueAuthors.sort((a, b) => {
+        let kanaA = authorMap[a];
+        let kanaB = authorMap[b];
+        return kanaA.localeCompare(kanaB, 'ja');
+    });
+
     uniqueAuthors.forEach(author => {
-        const el = document.createElement('div'); el.className = 'vertical-link'; el.innerText = author; 
+        const el = document.createElement('div'); 
+        el.className = 'vertical-link'; 
+        el.innerText = author; 
         el.onclick = function() { jumpToAuthorRoom(author); };
         container.appendChild(el);
     });
-    container.style.justifyContent = 'center';
+
+    // 端の要素が画面外に押し出されないよう、人数の多さに応じて配置を動的切り替え
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
 }
 
 function jumpToAuthorRoom(author) {
@@ -367,7 +381,13 @@ function showKigoList(seasonCode, seasonName) {
         el.onclick = function() { navState.kigoName = kigo; openSaijikiKigoWithCard(kigo); }; 
         container.appendChild(el);
     });
-    container.style.justifyContent = 'center';
+
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
+
     renderPage('kigoListPage');
 }
 
@@ -452,7 +472,11 @@ function showIssueYearList() {
         container.appendChild(el);
     });
     
-    container.style.justifyContent = 'center';
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
     renderPage('issueYearPage');
 }
 
@@ -479,7 +503,6 @@ function showIssueMonthList(year) {
         let kanjiMonth = toKanjiMonth(month);
         let label = issueNo ? `${kanjiMonth}（第${issueNo}号）` : `${kanjiMonth}`;
         
-        // 🌸 【修正箇所】 createElement で正しくdiv要素を生成
         const el = document.createElement('div');
         el.className = 'vertical-link';
         el.innerText = label;
@@ -487,7 +510,11 @@ function showIssueMonthList(year) {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = 'center';
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
     renderPage('issueMonthPage');
 }
 
@@ -551,7 +578,11 @@ function showUtenaAuthorListPage() {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = 'center';
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
     renderPage('utenaAuthorListPage');
 }
 
@@ -577,7 +608,11 @@ function showUtenaAuthorWorks(author) {
         container.appendChild(card);
     });
 
-    container.style.justifyContent = 'center';
+    if (container.scrollWidth > container.clientWidth) {
+        container.style.justifyContent = 'flex-start';
+    } else {
+        container.style.justifyContent = 'center';
+    }
     container.scrollLeft = 0;
 
     renderPage('saijikiListRoomPage');
