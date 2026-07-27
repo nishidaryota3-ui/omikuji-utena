@@ -478,7 +478,9 @@ function showIssueMonthList(year) {
         let issueNo = monthMap[month];
         let kanjiMonth = toKanjiMonth(month);
         let label = issueNo ? `${kanjiMonth}（第${issueNo}号）` : `${kanjiMonth}`;
-        const el = document.getElementById('div');
+        
+        // 🌸 【修正箇所】 createElement で正しくdiv要素を生成
+        const el = document.createElement('div');
         el.className = 'vertical-link';
         el.innerText = label;
         el.onclick = function() { showIssueDetailPage(year, month); };
