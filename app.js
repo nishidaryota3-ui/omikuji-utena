@@ -88,7 +88,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 🌸 歳時記データ受信処理
+// 🌸 歳時記データ受信処理（/ スラッシュ区切り対応版）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -106,7 +106,11 @@ function saijikiDataReceived(data) {
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
             let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
-            let childKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
+            
+            // ★ 子季語の区切り文字（カンマ / スラッシュ / 読点）を画面表示用に「、」へ統一
+            let rawChildKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
+            let childKigos = rawChildKigos.replace(/[/／,，]/g, '、');
+
             let desc = rowCells[7] && (rowCells[7].v || rowCells[7].f) ? String(rowCells[7].v || rowCells[7].f).trim() : '';
 
             if (!dict[parentKigo]) {
@@ -634,7 +638,6 @@ function revealHiddenInfo() {
     if (mainTag) {
         mainTag.className = 'info-upper-tag';
         
-        // おみ句じ（季節）の場合は、iマーク開示時に「作者名のみ」表示
         if (navState.category === 'haiku') {
             mainTag.innerHTML = `<div><a href="javascript:void(0);" onclick="jumpToAuthorRoom('${currentHaiku.author}')">${currentHaiku.author}</a></div>`;
         } else {
