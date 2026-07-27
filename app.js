@@ -86,7 +86,6 @@ function mainDataReceived(data) {
     }
 }
 
-// 歳時記データベースの読み込み処理（APIの末尾省略仕様に対応した安全スキャン）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -97,31 +96,29 @@ function saijikiDataReceived(data) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
-            // C列（インデックス2）に親季語があるか確認
-            let parentCell = rowCells[2];
-            if (!parentCell || parentCell.v === null || parentCell.v === undefined) continue;
+            let parentVal = rowCells[2] ? rowCells[2].v : null;
+            if (parentVal === null || parentVal === undefined) continue;
 
-            let parentKigo = String(parentCell.v).trim();
+            let parentKigo = String(parentVal).replace(/[\s\u3000]+/g, '').trim();
             if (parentKigo === '親季語' || parentKigo === '') continue;
 
-            // D列: よみがな (インデックス3)
-            let kigoKana = (rowCells[3] && rowCells[3].v) ? String(rowCells[3].v).trim() : '';
+            let kigoKana = rowCells[3] && rowCells[3].v ? String(rowCells[3].v).trim() : '';
+            let childKigos = rowCells[6] && rowCells[6].v ? String(rowCells[6].v).trim() : '';
             
-            // G列: 表示用子季語 (インデックス6)
-            let childKigos = (rowCells[6] && rowCells[6].v) ? String(rowCells[6].v).trim() : '';
-            
-            // H列: 季語の説明 (インデックス7、または届いている一番最後の要素)
             let desc = '';
-            if (rowCells[7] && rowCells[7].v) {
-                desc = String(rowCells[7].v).trim();
-            } else if (rowCells.length > 7 && rowCells[rowCells.length - 1] && rowCells[rowCells.length - 1].v) {
-                desc = String(rowCells[rowCells.length - 1].v).trim();
+            for (let j = 2; j < rowCells.length; j++) {
+                if (rowCells[j] && rowCells[j].v) {
+                    let text = String(rowCells[j].v).trim();
+                    if (text.length > 10) {
+                        desc = text;
+                        break;
+                    }
+                }
             }
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
             } else {
-                // 既に登録済みの親季語の場合、有効なデータが入っている時のみ保持・補完する
                 if (kigoKana && !dict[parentKigo].kigoKana) dict[parentKigo].kigoKana = kigoKana;
                 if (childKigos && !dict[parentKigo].childKigos) dict[parentKigo].childKigos = childKigos;
                 if (desc && !dict[parentKigo].desc) dict[parentKigo].desc = desc;
@@ -346,10 +343,11 @@ function showKigoList(seasonCode, seasonName) {
     renderPage('kigoListPage');
 }
 
-// 🌸 ポップアップ表示
 function openSaijikiKigoWithCard(kigoName) {
     currentTargetKigo = kigoName;
-    let saijikiInfo = saijikiDict[kigoName];
+    
+    let cleanKey = String(kigoName).replace(/[\s\u3000]+/g, '').trim();
+    let saijikiInfo = saijikiDict[cleanKey] || saijikiDict[kigoName];
 
     const parentEl = document.getElementById('cardParentKigo');
     const childEl = document.getElementById('cardChildKigo');
@@ -463,6 +461,7 @@ function showIssueMonthList(year) {
     renderPage('issueMonthPage');
 }
 
+// 🌸 臺俳句：号内（月別）作品・俳人一覧表示の修正
 function showIssueDetailPage(year, month) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = month;
@@ -473,6 +472,7 @@ function showIssueDetailPage(year, month) {
 
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === year && item.issueMonth === month);
 
+    // 1. 「おみ句じ（全作品）」ボタン（表記変更）
     const allBtn = document.createElement('div');
     allBtn.className = 'vertical-link';
     allBtn.style.fontWeight = 'bold';
@@ -488,6 +488,7 @@ function showIssueDetailPage(year, month) {
     };
     container.appendChild(allBtn);
 
+    // 2. スプレッドシートの掲載順（入力順）そのまま保持して重複排除
     let orderedAuthors = [];
     issueHaikus.forEach(item => {
         if (item.author && !orderedAuthors.includes(item.author)) {
@@ -495,9 +496,10 @@ function showIssueDetailPage(year, month) {
         }
     });
 
+    // 3. 俳人別リンクを追加（おみ句じ・俳人と同じスクロールレイアウト）
     orderedAuthors.forEach(author => {
         const el = document.createElement('div');
-        el.className = 'vertical-link utena-author-link';
+        el.className = 'vertical-link';
         el.innerText = author;
         el.onclick = function() {
             navState.authorName = author;
@@ -510,7 +512,8 @@ function showIssueDetailPage(year, month) {
         container.appendChild(el);
     });
 
-    container.style.justify = 'flex-start';
+    // 左詰め配置で端まで横スクロール可能に
+    container.style.justifyContent = 'flex-start';
     renderPage('issueDetailPage');
 }
 
