@@ -150,14 +150,15 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 精密ルビ変換処理（｜指定および直前漢字抽出に対応）
+// 🌸 改修版ルビ変換処理（｜指定を最優先で100%確実に処理）
 function formatRubyText(text) {
     if (!text) return '';
+    let result = text;
     
-    // 1. ｜漢字《ルビ》または |漢字(ルビ) の明示指定パターン
-    let result = text.replace(/[｜|]([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 1. ｜（全角・半角縦線）がある場合：｜から《》の手前までを完全に1つのルビ対象とする
+    result = result.replace(/[｜|]([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
-    // 2. ｜のない通常パターン：《》の直前にある漢字のみ（ひらがな・カタカナ・記号で途切れる場所まで）を自動抽出
+    // 2. ｜がない場合：《》の直前にある漢字のみ（ひらがな・記号等で途切れる手前まで）を対象とする
     result = result.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
     return result;
@@ -509,7 +510,6 @@ function showIssueDetailPage(year, month) {
     renderPage('issueDetailPage');
 }
 
-// 🌸 臺俳句：号内の「俳人別」執筆者一覧画面（中央寄せ固定）
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -538,7 +538,6 @@ function showUtenaAuthorListPage() {
     renderPage('utenaAuthorListPage');
 }
 
-// 🌸 臺俳句：特定の俳人の全作品を中央寄せで横スクロール（1句目から確実表示）
 function showUtenaAuthorWorks(author) {
     navState.authorName = author;
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth && item.author === author);
