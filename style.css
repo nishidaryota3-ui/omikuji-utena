@@ -45,6 +45,8 @@ body, html {
 .horizontal-scroll-container {
     display: flex; flex-direction: row-reverse; justify-content: center; align-items: center;
     width: 85vw; height: 65vh; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
+    margin: auto !important;
+    max-width: 100% !important;
 }
 
 #kigoList { gap: 1.8rem !important; }
@@ -95,27 +97,38 @@ body, html {
 .search-child { font-size: 0.8rem; color: #888888; margin-left: 8px; }
 .search-item-none { padding: 12px; font-size: 0.85rem; color: #888888; text-align: center; }
 
-/* 🌸 季語解説ポップアップカード (縦書き配列) */
-.card-overlay {
+/* 🌸 季語解説ポップアップカード (縦書き配列・長文自動スクロール保護追加) */
+.card-overlay,
+#kigoCardOverlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);
     display: flex; justify-content: center; align-items: center; z-index: 100;
     transition: opacity 0.4s ease, visibility 0.4s ease;
 }
-.card-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.card-overlay.hidden,
+#kigoCardOverlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-.kigo-card-content {
-    background: #faf9f6; padding: 8vh 6vw; border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15); max-width: 85vw; max-height: 75vh;
-    display: flex; flex-direction: row-reverse; gap: 2.5rem; overflow-x: auto;
+.kigo-card-content,
+.kigo-card {
+    background: #faf9f6; padding: 6vh 5vw; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    max-width: 85vw; max-height: 80vh !important;
+    display: flex; flex-direction: row-reverse; gap: 2.5rem; 
+    overflow-x: auto !important; overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    word-break: break-word;
 }
 
 .card-column { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; letter-spacing: 0.2em; }
-.parent-kigo-col { font-size: 1.8rem; font-weight: bold; color: #2b2b2b; line-height: 1.5; }
+.parent-kigo-col { font-size: 1.8rem; font-weight: bold; color: #2b2b2b; line-height: 1.5; white-space: nowrap; }
 .parent-kigo-col ruby { ruby-position: over; -webkit-ruby-position: over; }
 .parent-kigo-col rt { font-size: 0.45em; color: #666666; }
-.child-kigo-col { font-size: 1.05rem; color: #555555; margin-top: 2rem; }
-.desc-kigo-col { font-size: 0.95rem; color: #333333; line-height: 1.8; margin-top: 4rem; }
+
+/* 子季語・解説がどれだけ長くても溢れない可動領域設定 */
+.child-kigo-col,
+#cardChildKigo { font-size: 1.05rem; color: #555555; line-height: 1.6; max-height: 65vh; overflow-y: auto; }
+.desc-kigo-col,
+#cardDesc { font-size: 0.95rem; color: #333333; line-height: 1.8; max-height: 65vh; overflow-y: auto; }
 
 /* 📜 季寄せ作品一覧スクロール画面 */
 .saijiki-scroll-list { gap: 3.5rem !important; }
@@ -178,12 +191,6 @@ body, html {
     margin: 0 45px !important;
 }
 
-/* 🌸 横スクロール領域の中央配置＆スクロール領域確保の自動切り替え */
-.horizontal-scroll-container {
-    margin: auto !important;
-    max-width: 100% !important;
-}
-
 /* 🌸 臺俳句：連作鑑賞カードの余白調整 */
 .utena-work-card {
     min-width: 120px !important;
@@ -192,11 +199,14 @@ body, html {
 }
 
 /* 🌸 縦書き時のルビ範囲崩れ防止指定 */
-.ruby-wrap {
+.ruby-wrap,
+.ruby-block {
     display: inline-block;
     writing-mode: vertical-rl;
+    -webkit-writing-mode: vertical-rl;
 }
 
 ruby {
     ruby-position: over;
+    -webkit-ruby-position: over;
 }
