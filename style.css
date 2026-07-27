@@ -1,362 +1,200 @@
-/* ==========================================
-   UTENA 俳句データベース - 完全復元スタイル
-   ========================================== */
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
-}
-
+/* 画面全体の初期化 */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body, html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #fcfcfc;
-    color: #2b2b2b;
-    font-family: "Yu Mincho", "游明朝", "Hiragino Mincho ProN", "MS PMincho", serif;
+    background-color: #faf9f6; color: #2b2b2b;
+    font-family: "游明朝", "Yu Mincho", "ヒラギノ明朝 ProN", "Hiragino Mincho ProN", "Shippori Mincho", "MS P明朝", serif;
+    overflow: hidden; height: 100%; width: 100%;
+    user-select: none; -webkit-user-select: none;
 }
 
-/* --- レイヤーページ管理 --- */
-.layer-page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #fcfcfc;
-    z-index: 10;
-}
-
-/* --- ローディング画面 --- */
-#loadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #fcfcfc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    font-size: 1.1rem;
-    letter-spacing: 0.15em;
-    color: #666;
-}
-
-/* --- パンくずリスト --- */
-#globalBreadcrumb {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
-    color: #888;
-    font-family: sans-serif;
-}
-
-#globalBreadcrumb .link {
-    cursor: pointer;
-    color: #555;
-    text-decoration: underline;
-}
-
-#globalBreadcrumb .separator {
-    margin: 0 8px;
-    color: #ccc;
-}
-
-#globalBreadcrumb .current {
-    color: #111;
-    font-weight: bold;
-}
-
-/* --- 固定カテゴリボタン --- */
-#fixedCatBtn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 100;
-    font-size: 0.85rem;
-    cursor: pointer;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #fff;
-    font-family: sans-serif;
-}
-
-#fixedCatBtn.hidden {
-    display: none;
-}
-
-/* --- 縦書き共通リンク --- */
 .vertical-link {
-    writing-mode: vertical-rl;
-    text-orientation: upright;
-    font-size: 1.25rem;
-    letter-spacing: 0.25em;
-    margin: 0 15px;
-    cursor: pointer;
-    user-select: none;
-    transition: opacity 0.2s;
+    writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
+    font-size: clamp(1.1rem, 4vw, 1.4rem); letter-spacing: 0.25em;
+    cursor: pointer; transition: color 0.3s ease; white-space: nowrap;
 }
+.vertical-link:hover { color: #888888; }
 
-.vertical-link:hover {
-    opacity: 0.6;
-}
-
-/* 臺俳句アーカイブ用ボタン */
-.utena-mode-btn {
-    border: 1px solid #ccc;
-    padding: 15px 10px;
-    border-radius: 4px;
-    background: #fff;
-}
-
-/* --- 句表示エリア（Room Page） --- */
-#roomPage {
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
-
-.haiku-container {
-    writing-mode: vertical-rl;
-    text-orientation: upright;
-    font-size: 2.2rem;
-    line-height: 2;
-    letter-spacing: 0.3em;
-    max-height: 70vh;
-    user-select: none;
-}
-
-/* 情報タグ（作者名・季語表示） */
-.info-upper-tag {
-    position: absolute;
-    top: 15vh;
-    left: 10vw;
-    writing-mode: vertical-rl;
-    font-size: 1rem;
-    letter-spacing: 0.2em;
-    color: #555;
-}
-
-.info-kigo-sub {
-    font-size: 0.85rem;
-    color: #888;
-    margin-bottom: 8px;
-}
-
-#infoTrigger {
-    position: absolute;
-    top: 15vh;
-    left: 10vw;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: #888;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: serif;
-}
-
-/* --- スワイプ/矢印ナビゲーション --- */
-.nav-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    color: #ccc;
-    cursor: pointer;
-    user-select: none;
-    padding: 20px;
-    transition: color 0.2s;
-}
-
-.nav-arrow:hover {
-    color: #555;
-}
-
-.nav-arrow.disabled {
-    opacity: 0.15;
-    cursor: default;
-}
-
-#prevBtn { left: 10px; }
-#nextBtn { right: 10px; }
-
-/* --- 歳時記一覧・カードモーダル --- */
-.saijiki-container {
-    display: flex;
-    flex-direction: row-reverse;
-    overflow-x: auto;
-    width: 90vw;
-    height: 70vh;
-    align-items: center;
-    padding: 20px;
-}
-
-.saijiki-haiku-card {
-    writing-mode: vertical-rl;
-    text-orientation: upright;
-    border-left: 1px solid #eee;
-    padding: 0 30px;
-    height: 100%;
-    display: flex;
+.layer-page {
+    position: absolute; top: 0; left: 0; height: 100%; width: 100%;
+    display: none; justify-content: center; align-items: center; padding: 10vh 5vw;
     flex-direction: column;
-    justify-content: space-between;
 }
 
-.saijiki-phrase {
-    font-size: 1.5rem;
-    line-height: 1.8;
-    letter-spacing: 0.25em;
+/* 🏡 トップメニュー */
+#topPage { 
+    display: flex; gap: clamp(1.5rem, 5vw, 3.5rem); flex-direction: row; 
+    justify-content: center; align-items: center; max-width: 95vw;
+} 
+
+.menu-block { display: flex; flex-direction: row; align-items: flex-start; height: clamp(280px, 50vh, 380px); }
+.main-headline { font-size: clamp(1.5rem, 5vw, 1.9rem); font-weight: 500; color: #2b2b2b; writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; letter-spacing: 0.25em; }
+.sub-menu-group { display: flex; flex-direction: row; gap: clamp(1.0rem, 3.5vw, 2.2rem); margin-right: clamp(1.2rem, 3.5vw, 2.5rem); }
+.sub-link { font-size: clamp(1.1rem, 3.8vw, 1.35rem); font-weight: 500; color: #555555; letter-spacing: 0.2em; margin-top: clamp(2.5rem, 8vh, 4.0rem); }
+.sub-link:hover { color: #888888; }
+
+#haijinPage { display: none; }
+#haikuPage .horizontal-scroll-container { display: flex; flex-direction: row-reverse; gap: clamp(1.2rem, 3vw, 3.5rem); }
+
+/* 季寄せ（季節選択）：スクロールなしで1画面にすっきり収めるコンテナ */
+#saijikiPage .fits-screen-container { 
+    display: flex; flex-direction: row-reverse; justify-content: center; align-items: center;
+    gap: clamp(1.2rem, 4vw, 2.8rem); width: 100%; height: 50vh; margin-top: 20px;
 }
 
-.saijiki-author {
-    font-size: 0.95rem;
-    color: #666;
-    margin-top: 20px;
+/* 横一列スクロールコンテナ */
+.horizontal-scroll-container {
+    display: flex; flex-direction: row-reverse; justify-content: center; align-items: center;
+    width: 85vw; height: 65vh; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
 }
 
-/* モーダルオーバーレイ */
-#kigoCardOverlay,
-.kigo-card-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 500;
+#kigoList { gap: 1.8rem !important; }
+#haijinList { gap: 3.5rem; }
+
+/* 臺俳句の号内俳人リンク（入力順・適度なスペース） */
+.utena-author-link { margin-left: clamp(2.0rem, 4.5vw, 3.5rem); }
+
+.horizontal-scroll-container::-webkit-scrollbar { height: 6px; }
+.horizontal-scroll-container::-webkit-scrollbar-track { background: #eae8e3; border-radius: 3px; }
+.horizontal-scroll-container::-webkit-scrollbar-thumb { background: #b5b5b5; border-radius: 3px; cursor: pointer; }
+
+#roomPage { z-index: 5; flex-direction: row; touch-action: pan-y; }
+.haiku-screen { height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+
+.phrase {
+    writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
+    font-size: 3.2vh; line-height: 1.4; letter-spacing: 0.3em; font-weight: 500; white-space: nowrap; 
+    text-align: center; display: block;
 }
 
-#kigoCardOverlay.hidden,
-.kigo-card-overlay.hidden {
-    display: none;
-}
+/* 縦書きルビ（ふりがな）用のデザイン調整 */
+.phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
+.phrase rt { font-size: 0.45em; letter-spacing: 0.1em; color: #555555; }
 
-/* 🌸 季語ポップアップカード（長文・大量の子季語自動スクロール対応） */
-#kigoCardOverlay .kigo-card,
-.kigo-card-overlay .kigo-card {
-    background: #fff;
-    width: 85vw;
-    max-width: 500px;
-    max-height: 80vh !important;  /* 画面高さの80%までに制限 */
-    overflow-y: auto !important;   /* 文字数が溢れたら自動で内部スクロール */
-    box-sizing: border-box;
-    padding: 28px 24px;
-    border-radius: 6px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-    word-break: break-word;        /* 長い文字列でも枠外で折り返す */
+/* 🔍 季語検索ボックス */
+.saijiki-search-box {
+    position: relative; width: clamp(260px, 60vw, 420px); margin-top: -20px; z-index: 40;
 }
-
-.card-parent-kigo {
-    font-size: 1.8rem;
-    font-weight: bold;
-    margin-bottom: 12px;
-    border-bottom: 2px solid #2b2b2b;
-    padding-bottom: 6px;
+.saijiki-search-box input {
+    width: 100%; padding: 8px 16px; border: 1px solid #d0c8b8; border-radius: 20px;
+    background: #faf9f6; font-size: 0.9rem; font-family: inherit; color: #2b2b2b;
+    outline: none; text-align: center; transition: border-color 0.2s, background 0.2s;
 }
+.saijiki-search-box input:focus { border-color: #8c8476; background: #ffffff; }
 
-.card-child-kigo,
-#cardChildKigo {
-    font-size: 0.9rem;
-    color: #555;
-    max-height: 120px;             /* 子季語が多すぎる場合はスクロール */
-    overflow-y: auto;
-    word-break: break-all;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    background: #f9f9f9;
-    padding: 8px;
-    border-radius: 4px;
+.search-results-dropdown {
+    position: absolute; top: 110%; left: 0; width: 100%; max-height: 220px;
+    overflow-y: auto; background: #ffffff; border: 1px solid #d0c8b8; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 50;
 }
-
-.card-desc,
-#cardDesc {
-    font-size: 0.95rem;
-    line-height: 1.8;
-    color: #333;
-    word-break: break-word;
-}
-
-.card-close-btn {
-    margin-top: 20px;
-    text-align: center;
-    padding: 8px 0;
-    background: #2b2b2b;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: sans-serif;
-    font-size: 0.9rem;
-}
-
-/* --- 検索入力欄 --- */
-.search-box {
-    margin-bottom: 20px;
-    width: 80vw;
-    max-width: 400px;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 10px 14px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    outline: none;
-    font-family: sans-serif;
-}
-
 .search-result-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
+    padding: 10px 14px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f0eee8;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.search-result-item:hover { background: #faf9f6; }
+.search-parent { font-weight: 500; color: #2b2b2b; }
+.search-child { font-size: 0.8rem; color: #888888; margin-left: 8px; }
+.search-item-none { padding: 12px; font-size: 0.85rem; color: #888888; text-align: center; }
+
+/* 🌸 季語解説ポップアップカード (縦書き配列) */
+.card-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);
+    display: flex; justify-content: center; align-items: center; z-index: 100;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.card-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.kigo-card-content {
+    background: #faf9f6; padding: 8vh 6vw; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); max-width: 85vw; max-height: 75vh;
+    display: flex; flex-direction: row-reverse; gap: 2.5rem; overflow-x: auto;
 }
 
-.search-parent {
-    font-weight: bold;
-    margin-right: 8px;
+.card-column { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; letter-spacing: 0.2em; }
+.parent-kigo-col { font-size: 1.8rem; font-weight: bold; color: #2b2b2b; line-height: 1.5; }
+.parent-kigo-col ruby { ruby-position: over; -webkit-ruby-position: over; }
+.parent-kigo-col rt { font-size: 0.45em; color: #666666; }
+.child-kigo-col { font-size: 1.05rem; color: #555555; margin-top: 2rem; }
+.desc-kigo-col { font-size: 0.95rem; color: #333333; line-height: 1.8; margin-top: 4rem; }
+
+/* 📜 季寄せ作品一覧スクロール画面 */
+.saijiki-scroll-list { gap: 3.5rem !important; }
+.saijiki-haiku-card { display: flex; flex-direction: row-reverse; gap: 1.2rem; align-items: center; }
+.saijiki-phrase { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 1.35rem; letter-spacing: 0.25em; line-height: 1.4; color: #2b2b2b; }
+.saijiki-phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
+.saijiki-phrase rt { font-size: 0.45em; color: #666666; }
+.saijiki-author { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 0.95rem; letter-spacing: 0.2em; color: #777777; margin-top: 3rem; }
+
+/* 🧭 グローバルヘッダー（パンくず上段 ＋ 右上情報下段） */
+.global-header-area {
+    position: absolute; top: calc(15px + env(safe-area-inset-top)); left: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px; z-index: 30; pointer-events: none;
+}
+.header-row-top { display: flex; justify-content: flex-start; width: 100%; }
+.header-row-bottom { display: flex; justify-content: flex-end; align-items: center; width: 100%; min-height: 24px; }
+
+.breadcrumb {
+    font-size: 0.82rem; color: #666666; letter-spacing: 0.05em; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.4rem; line-height: 1.3; pointer-events: auto; max-width: 100%;
+}
+.breadcrumb span.link { cursor: pointer; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
+.breadcrumb span.link:hover { color: #2b2b2b; border-bottom: 1px solid #2b2b2b; }
+.breadcrumb span.separator { color: #b5b5b5; font-family: sans-serif; }
+.breadcrumb span.current { white-space: nowrap; }
+
+/* 🏷️ 右上情報タグ */
+.info-upper-tag {
+    font-size: 0.95rem; color: #2b2b2b; letter-spacing: 0.05em; font-weight: 500; white-space: nowrap; text-align: right; pointer-events: auto; display: flex; flex-direction: column; align-items: flex-end;
+}
+.info-upper-tag a { color: #2b2b2b; text-decoration: none; border-bottom: 1px solid #2b2b2b; }
+.info-kigo-sub { font-size: 0.83rem; color: #888888; margin-bottom: 2px; }
+
+#infoTrigger { 
+    font-size: 1.1rem; color: #8c8476; cursor: pointer; display: none; padding: 2px 8px; pointer-events: auto; font-family: serif; font-style: italic;
 }
 
-.search-child {
-    font-size: 0.85rem;
-    color: #777;
+/* 🏹 矢印ナビゲーションボタン */
+.nav-arrow { 
+    position: absolute; top: 50%; transform: translateY(-50%); font-size: 1.0rem; color: #a0998c; cursor: pointer; padding: 20px 15px; z-index: 25; background: none; border: none; transition: color 0.2s ease, opacity 0.2s ease, transform 0.1s ease; opacity: 0.6; user-select: none;
+}
+.nav-arrow:active { transform: translateY(-50%) scale(0.9); }
+.nav-arrow:hover { color: #2b2b2b; opacity: 1; }
+.arrow-left { left: calc(5px + env(safe-area-inset-left)); } 
+.arrow-right { right: calc(5px + env(safe-area-inset-right)); }
+.nav-arrow.disabled { visibility: hidden; }
+
+#loadingOverlay { 
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #faf9f6; display: flex; justify-content: center; align-items: center; z-index: 100; color: #8c8476; font-size: 14px; letter-spacing: 0.15em; 
 }
 
-.search-item-none {
-    padding: 10px;
-    color: #999;
-    font-size: 0.9rem;
+/* 🐾 おみ句じ猫ボタン */
+.fixed-cat-trigger {
+    position: fixed; bottom: calc(5px + env(safe-area-inset-bottom)); left: calc(0px + env(safe-area-inset-left)); width: 220px !important; height: auto !important; cursor: pointer; z-index: 50; transition: transform 0.2s ease, opacity 0.3s ease; opacity: 0.85;
+}
+.fixed-cat-trigger:hover { transform: scale(1.05); opacity: 1; }
+.fixed-cat-trigger.hidden { display: none !important; }
+
+/* 🌸 臺俳句：選択ボタンの間隔拡張 */
+.utena-mode-btn {
+    margin: 0 45px !important;
 }
 
-/* --- 🌸 縦書き表示での前文字巻き込み防止指定 --- */
-.ruby-block,
+/* 🌸 横スクロール領域の中央配置＆スクロール領域確保の自動切り替え */
+.horizontal-scroll-container {
+    margin: auto !important;
+    max-width: 100% !important;
+}
+
+/* 🌸 臺俳句：連作鑑賞カードの余白調整 */
+.utena-work-card {
+    min-width: 120px !important;
+    padding: 0 15px !important;
+    justify-content: center !important;
+}
+
+/* 🌸 縦書き時のルビ範囲崩れ防止指定 */
 .ruby-wrap {
     display: inline-block;
     writing-mode: vertical-rl;
-    vertical-align: top;
 }
 
 ruby {
