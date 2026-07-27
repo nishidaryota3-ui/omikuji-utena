@@ -465,7 +465,6 @@ function showIssueMonthList(year) {
     renderPage('issueMonthPage');
 }
 
-// 🌸 臺俳句：号内（月別）選択画面（「おみ句じ（全句）」と「俳人別」の2項目へ整理・間隔広げ）
 function showIssueDetailPage(year, month) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = month;
@@ -476,7 +475,6 @@ function showIssueDetailPage(year, month) {
 
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === year && item.issueMonth === month);
 
-    // 1. 「おみ句じ（全句）」項目
     const allBtn = document.createElement('div');
     allBtn.className = 'vertical-link utena-mode-btn';
     allBtn.innerText = 'おみ句じ（全句）';
@@ -491,7 +489,6 @@ function showIssueDetailPage(year, month) {
     };
     container.appendChild(allBtn);
 
-    // 2. 「俳人別」項目
     const haijinBtn = document.createElement('div');
     haijinBtn.className = 'vertical-link utena-mode-btn';
     haijinBtn.innerText = '俳人別';
@@ -504,7 +501,6 @@ function showIssueDetailPage(year, month) {
     renderPage('issueDetailPage');
 }
 
-// 🌸 臺俳句：号内の「俳人別」執筆者一覧画面
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -533,7 +529,7 @@ function showUtenaAuthorListPage() {
     renderPage('utenaAuthorListPage');
 }
 
-// 🌸 臺俳句：特定の俳人の全作品をスプレッドシート順（連作）で縦書き一覧表示
+// 🌸 臺俳句：特定の俳人の全作品を1句目から確実に表示（数字なし・1句目スタート固定）
 function showUtenaAuthorWorks(author) {
     navState.authorName = author;
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth && item.author === author);
@@ -547,15 +543,18 @@ function showUtenaAuthorWorks(author) {
         return;
     }
 
-    issueHaikus.forEach((item, idx) => {
+    issueHaikus.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'saijiki-haiku-card utena-work-card';
         card.innerHTML = `
             <div class="saijiki-phrase utena-phrase">${formatRubyText(item.phrase)}</div>
-            <div class="utena-work-no">${idx + 1}</div>
         `;
         container.appendChild(card);
     });
+
+    // 左端（1句目）からの表示を強制・自動スクロール位置リセット
+    container.style.justifyContent = 'flex-start';
+    container.scrollLeft = 0;
 
     renderPage('saijikiListRoomPage');
 }
