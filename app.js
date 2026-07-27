@@ -153,20 +153,23 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 ルビ置換ロジック（HTMLタグで明確に保護）
+// 🌸 【万能版ルビ処理】《漢字:ルビ》 / ｜漢字《ルビ》 / 漢字《ルビ》 すべてに対応
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
 
-    // 1. 全角縦線「｜」を半角「|」に統一
-    str = str.replace(/｜/g, '|');
+    // 1. 最優先：《対象文字:ルビ》 または 《対象文字：ルビ》 のパターン（全角・半角コロン両対応）
+    str = str.replace(/[《（(]([^:：》）)]+)[:：]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
+        return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
+    });
 
-    // 2. 縦線 | がある場合：| から 《》 直前までのすべての文字を独立したrubyタグで囲む
+    // 2. 縦線指定： ｜漢字《ルビ》 または |漢字《ルビ》
+    str = str.replace(/｜/g, '|');
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // 3. 縦線がない場合：《》直前にある漢字のみを自動抽出して独立したrubyタグで囲む
+    // 3. 自動判定： 漢字《ルビ》
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-wrap"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
