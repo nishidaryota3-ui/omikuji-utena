@@ -190,3 +190,13 @@ body, html {
     padding: 0 15px !important;
     justify-content: center !important;
 }
+
+/* 🌸 縦書き時のルビ範囲崩れ防止指定 */
+.ruby-wrap {
+    display: inline-block;
+    writing-mode: vertical-rl;
+}
+
+ruby {
+    ruby-position: over;
+}
