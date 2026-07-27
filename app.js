@@ -153,23 +153,22 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 【縦書き干渉防止対策済み】ルビ変換処理
+// 🌸 【完全分離・優先処理】縦線ルールを自動判定より前に100%強制適用するルビ関数
 function formatRubyText(text) {
     if (!text) return '';
     let str = String(text);
 
-    // 1. コロン明示指定：《漢字:ルビ》 または 《漢字：ルビ》
-    str = str.replace(/[《（(]([^:：》）)]+)[:：]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
-        return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
-    });
-
-    // 2. 縦線明示指定：｜漢字《ルビ》 または |漢字《ルビ》
+    // 全角「｜」を半角「|」に統一
     str = str.replace(/｜/g, '|');
+
+    // STEP 1: 「|」がある箇所を最優先で処理（文字種を問わず | から 《》 の手前までを確実にルビ化）
+    // 例: 水|平《たい》ら ➔ 「平」だけにルビ
+    // 例: |灯りヶ原《あかりがはら》 ➔ 「灯りヶ原」全文字にルビ
     str = str.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
 
-    // 3. 自動漢字抽出指定：漢字《ルビ》
+    // STEP 2: 「|」がない場合のみ、自動判定（《》の直前にある漢字のみを抽出）を実行
     str = str.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, function(match, targetText, rubyText) {
         return '<span class="ruby-block"><ruby>' + targetText + '<rt>' + rubyText + '</rt></ruby></span>';
     });
