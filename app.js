@@ -150,15 +150,15 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 改修版ルビ変換処理（｜指定を最優先で100%確実に処理）
+// 🌸 改修版ルビ変換処理（全角「｜」・半角「|」を完全統一検知）
 function formatRubyText(text) {
     if (!text) return '';
     let result = text;
     
-    // 1. ｜（全角・半角縦線）がある場合：｜から《》の手前までを完全に1つのルビ対象とする
-    result = result.replace(/[｜|]([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 1. 全角・半角問わず ｜ または | から 《》 の手前までを確実にルビ対象漢字（$1）として抽出
+    result = result.replace(/(?:｜|\|)([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
-    // 2. ｜がない場合：《》の直前にある漢字のみ（ひらがな・記号等で途切れる手前まで）を対象とする
+    // 2. ｜がない場合：《》の直前にある漢字（ひらがな・記号等で途切れる場所まで）を対象とする
     result = result.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
     return result;
