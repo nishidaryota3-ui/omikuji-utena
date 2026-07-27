@@ -268,7 +268,7 @@ function renderPage(pageId) {
 function navigateTo(pageId) { renderPage(pageId); }
 function getSeasonCode(name) { const map = {'春':'haru', '夏':'natsu', '秋':'aki', '冬':'huyu', '新年':'shinnen', '無季':'muki'}; return map[name] || ''; }
 
-// 🌸 【修正箇所】あいうえお順（かなソート）＆ 端っこ切れ防止レイアウト対応
+// 🌸 【修正箇所】右端（先頭のあ行）から確実に表示されるようスクロール位置を制御
 function createHaijinList() {
     const container = document.getElementById('haijinList'); 
     if (!container) return;
@@ -300,12 +300,10 @@ function createHaijinList() {
         container.appendChild(el);
     });
 
-    // 端の要素が画面外に押し出されないよう、人数の多さに応じて配置を動的切り替え
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
+    // スクロール位置を一番右端（あ行の先頭）に移動させて隠れ防止
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
 }
 
 function jumpToAuthorRoom(author) {
@@ -382,11 +380,9 @@ function showKigoList(seasonCode, seasonName) {
         container.appendChild(el);
     });
 
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
 
     renderPage('kigoListPage');
 }
@@ -472,11 +468,9 @@ function showIssueYearList() {
         container.appendChild(el);
     });
     
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
     renderPage('issueYearPage');
 }
 
@@ -510,11 +504,9 @@ function showIssueMonthList(year) {
         container.appendChild(el);
     });
 
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
     renderPage('issueMonthPage');
 }
 
@@ -578,11 +570,9 @@ function showUtenaAuthorListPage() {
         container.appendChild(el);
     });
 
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
     renderPage('utenaAuthorListPage');
 }
 
@@ -608,12 +598,9 @@ function showUtenaAuthorWorks(author) {
         container.appendChild(card);
     });
 
-    if (container.scrollWidth > container.clientWidth) {
-        container.style.justifyContent = 'flex-start';
-    } else {
-        container.style.justifyContent = 'center';
-    }
-    container.scrollLeft = 0;
+    setTimeout(() => {
+        container.scrollLeft = container.scrollWidth;
+    }, 50);
 
     renderPage('saijikiListRoomPage');
 }
