@@ -150,9 +150,17 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
+// 🌸 精密ルビ変換処理（｜指定および直前漢字抽出に対応）
 function formatRubyText(text) {
     if (!text) return '';
-    return text.replace(/([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    
+    // 1. ｜漢字《ルビ》または |漢字(ルビ) の明示指定パターン
+    let result = text.replace(/[｜|]([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    
+    // 2. ｜のない通常パターン：《》の直前にある漢字のみ（ひらがな・カタカナ・記号で途切れる場所まで）を自動抽出
+    result = result.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    
+    return result;
 }
 
 function launchOmikuji() {
@@ -267,7 +275,7 @@ function createHaijinList() {
         el.onclick = function() { jumpToAuthorRoom(author); };
         container.appendChild(el);
     });
-    container.style.justifyContent = (uniqueAuthors.length > 5) ? 'flex-start' : 'center';
+    container.style.justifyContent = 'center';
 }
 
 function jumpToAuthorRoom(author) {
@@ -343,7 +351,7 @@ function showKigoList(seasonCode, seasonName) {
         el.onclick = function() { navState.kigoName = kigo; openSaijikiKigoWithCard(kigo); }; 
         container.appendChild(el);
     });
-    container.style.justifyContent = (uniqueKigos.length > 8) ? 'flex-start' : 'center';
+    container.style.justifyContent = 'center';
     renderPage('kigoListPage');
 }
 
@@ -428,7 +436,7 @@ function showIssueYearList() {
         container.appendChild(el);
     });
     
-    container.style.justifyContent = (years.length > 5) ? 'flex-start' : 'center';
+    container.style.justifyContent = 'center';
     renderPage('issueYearPage');
 }
 
@@ -461,7 +469,7 @@ function showIssueMonthList(year) {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = (months.length > 5) ? 'flex-start' : 'center';
+    container.style.justifyContent = 'center';
     renderPage('issueMonthPage');
 }
 
@@ -501,6 +509,7 @@ function showIssueDetailPage(year, month) {
     renderPage('issueDetailPage');
 }
 
+// 🌸 臺俳句：号内の「俳人別」執筆者一覧画面（中央寄せ固定）
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -525,11 +534,11 @@ function showUtenaAuthorListPage() {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = (orderedAuthors.length > 5) ? 'flex-start' : 'center';
+    container.style.justifyContent = 'center';
     renderPage('utenaAuthorListPage');
 }
 
-// 🌸 臺俳句：特定の俳人の全作品を1句目から確実に表示（数字なし・1句目スタート固定）
+// 🌸 臺俳句：特定の俳人の全作品を中央寄せで横スクロール（1句目から確実表示）
 function showUtenaAuthorWorks(author) {
     navState.authorName = author;
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth && item.author === author);
@@ -552,8 +561,7 @@ function showUtenaAuthorWorks(author) {
         container.appendChild(card);
     });
 
-    // 左端（1句目）からの表示を強制・自動スクロール位置リセット
-    container.style.justifyContent = 'flex-start';
+    container.style.justifyContent = 'center';
     container.scrollLeft = 0;
 
     renderPage('saijikiListRoomPage');
