@@ -140,7 +140,7 @@ function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
-    if (y === 2024) return '令和六年';
+    if (y === 2024) return '令和六';
     return `${y}年`;
 }
 
@@ -150,18 +150,20 @@ function toKanjiMonth(monthNum) {
     return map[m] ? `${map[m]}月` : `${m}月`;
 }
 
-// 🌸 改修版ルビ変換処理（全角「｜」・半角「|」を完全統一検知）
+// 🌸 改修版ルビ変換処理（全角縦線をまず半角化し、青空文庫形式を確実にルビ置換）
 function formatRubyText(text) {
     if (!text) return '';
-    let result = text;
     
-    // 1. 全角・半角問わず ｜ または | から 《》 の手前までを確実にルビ対象漢字（$1）として抽出
-    result = result.replace(/(?:｜|\|)([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 全角「｜」を一度すべて半角「|」に統一
+    let normalized = text.replace(/｜/g, '|');
     
-    // 2. ｜がない場合：《》の直前にある漢字（ひらがな・記号等で途切れる場所まで）を対象とする
-    result = result.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    // 1. |漢字《ルビ》 のパターン（明示指定）
+    normalized = normalized.replace(/\|([^《（(]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
     
-    return result;
+    // 2. |がない場合：《》直前の漢字のみを自動抽出
+    normalized = normalized.replace(/([\u4E00-\u9FFF\u3005]+)[《（(]([^》）)]+)[》）)]/g, '<ruby>$1<rt>$2</rt></ruby>');
+    
+    return normalized;
 }
 
 function launchOmikuji() {
@@ -215,12 +217,17 @@ function updateBreadcrumb() {
         }
         if (navState.issueMonth) {
             let monthLabel = `${toKanjiMonth(navState.issueMonth)}`;
-            if (navState.currentLayer === 'utenaAuthorListPage' || navState.currentLayer === 'roomPage' || navState.currentLayer === 'saijikiListRoomPage') {
+            if (navState.currentLayer === 'issueDetailPage') {
+                html += ` <span class="separator">&lt;</span> <span class="current">${monthLabel}</span>`;
+            } else if (navState.currentLayer === 'utenaAuthorListPage' || navState.currentLayer === 'roomPage' || navState.currentLayer === 'saijikiListRoomPage') {
                 html += ` <span class="separator">&lt;</span> <span class="link" onclick="showIssueDetailPage('${navState.issueYear}', '${navState.issueMonth}')">${monthLabel}</span>`;
             }
         }
         if (navState.currentLayer === 'utenaAuthorListPage') {
             html += ` <span class="separator">&lt;</span> <span class="current">俳人別</span>`;
+        }
+        if (navState.currentLayer === 'roomPage' && currentDisplayType === 'issue_all') {
+            html += ` <span class="separator">&lt;</span> <span class="current">全句</span>`;
         }
         if (navState.currentLayer === 'saijikiListRoomPage' && navState.authorName) {
             html += ` <span class="separator">&lt;</span> <span class="link" onclick="showUtenaAuthorListPage()">俳人別</span>`;
@@ -252,8 +259,11 @@ function renderPage(pageId) {
 
     const catBtn = document.getElementById('fixedCatBtn');
     if (catBtn) {
-        if (navState.category === 'saijiki' || navState.category === 'utena_archive') catBtn.classList.remove('hidden');
-        else catBtn.classList.add('hidden');
+        if (navState.category === 'saijiki' || (navState.category === 'utena_archive' && !isRoomOpen)) {
+            catBtn.classList.remove('hidden');
+        } else {
+            catBtn.classList.add('hidden');
+        }
     }
 
     updateBreadcrumb();
@@ -616,7 +626,7 @@ function updateHaikuDisplay() {
     const infoTrigger = document.getElementById('infoTrigger');
     const mainTag = document.getElementById('roomMainTag');
 
-    if (navState.category === 'omikuji_all') {
+    if (navState.category === 'omikuji_all' || (navState.category === 'utena_archive' && currentDisplayType === 'issue_all')) {
         infoRevealed = false; 
         if (mainTag) mainTag.innerText = ''; 
         if (infoTrigger) infoTrigger.style.display = 'inline-block';
@@ -627,14 +637,7 @@ function updateHaikuDisplay() {
     }
     else if (navState.category === 'utena_archive') {
         if (infoTrigger) infoTrigger.style.display = 'none'; 
-        if (mainTag) {
-            mainTag.className = 'info-upper-tag';
-            if (currentDisplayType === 'issue_all') {
-                mainTag.innerHTML = `<div class="info-kigo-sub">${kigoString}</div><div>${currentHaiku.author}</div>`;
-            } else {
-                mainTag.innerText = kigoString;
-            }
-        }
+        if (mainTag) { mainTag.className = 'info-upper-tag'; mainTag.innerText = kigoString; }
     }
     else {
         if (infoTrigger) infoTrigger.style.display = 'none'; 
@@ -680,5 +683,9 @@ document.addEventListener('keydown', function(event) {
     if (!isRoomOpen) return;
     if (event.key === 'ArrowLeft') changeHaiku(1); 
     if (event.key === 'ArrowRight') changeHaiku(-1); 
-    if (event.key === 'i' || event.key === 'I') { if (navState.category === 'omikuji_all' && !infoRevealed) revealHiddenInfo(); }
+    if (event.key === 'i' || event.key === 'I') {
+        if ((navState.category === 'omikuji_all' || (navState.category === 'utena_archive' && currentDisplayType === 'issue_all')) && !infoRevealed) {
+            revealHiddenInfo();
+        }
+    }
 });
