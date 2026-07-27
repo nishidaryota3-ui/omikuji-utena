@@ -89,11 +89,10 @@
 
     <!-- 季寄せ：季節一覧 ページ -->
     <div id="saijikiPage" class="layer-page">
-        <!-- 🔍 季語検索エリア ＋ 区切り線 -->
+        <!-- 🔍 季語検索エリア（不要な重複線を除去） -->
         <div class="saijiki-search-box">
             <input type="text" id="kigoSearchInput" placeholder="季語を検索（例：春の夕）" oninput="handleKigoSearch()">
             <div id="searchResults" class="search-results-dropdown hidden"></div>
-            <div class="search-divider"></div>
         </div>
 
         <div class="fits-screen-container">
