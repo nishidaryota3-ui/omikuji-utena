@@ -210,6 +210,9 @@ function updateBreadcrumb() {
                 html += ` <span class="separator">&lt;</span> <span class="link" onclick="showIssueDetailPage('${navState.issueYear}', '${navState.issueMonth}')">${monthLabel}</span>`;
             }
         }
+        if (navState.currentLayer === 'utenaAuthorListPage') {
+            html += ` <span class="separator">&lt;</span> <span class="current">俳人別</span>`;
+        }
         if (navState.currentLayer === 'saijikiListRoomPage' && navState.authorName) {
             html += ` <span class="separator">&lt;</span> <span class="link" onclick="showUtenaAuthorListPage()">俳人別</span>`;
             html += ` <span class="separator">&lt;</span> <span class="current">${navState.authorName}</span>`;
@@ -462,7 +465,7 @@ function showIssueMonthList(year) {
     renderPage('issueMonthPage');
 }
 
-// 🌸 臺俳句：号内（月別）選択画面（「全句」と「俳人別」の2項目へ整理）
+// 🌸 臺俳句：号内（月別）選択画面（「おみ句じ（全句）」と「俳人別」の2項目へ整理・間隔広げ）
 function showIssueDetailPage(year, month) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = month;
@@ -473,10 +476,10 @@ function showIssueDetailPage(year, month) {
 
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === year && item.issueMonth === month);
 
-    // 1. 「全句」項目（旧：おみ句じ全作品）
+    // 1. 「おみ句じ（全句）」項目
     const allBtn = document.createElement('div');
-    allBtn.className = 'vertical-link';
-    allBtn.innerText = '全句';
+    allBtn.className = 'vertical-link utena-mode-btn';
+    allBtn.innerText = 'おみ句じ（全句）';
     allBtn.onclick = function() {
         navState.authorName = '';
         currentDisplayType = 'issue_all';
@@ -490,7 +493,7 @@ function showIssueDetailPage(year, month) {
 
     // 2. 「俳人別」項目
     const haijinBtn = document.createElement('div');
-    haijinBtn.className = 'vertical-link';
+    haijinBtn.className = 'vertical-link utena-mode-btn';
     haijinBtn.innerText = '俳人別';
     haijinBtn.onclick = function() {
         showUtenaAuthorListPage();
@@ -509,7 +512,6 @@ function showUtenaAuthorListPage() {
 
     let issueHaikus = haikuDatabase.filter(item => item.issueYear === navState.issueYear && item.issueMonth === navState.issueMonth);
 
-    // スプレッドシートの掲載順（入力順）そのまま保持して重複排除
     let orderedAuthors = [];
     issueHaikus.forEach(item => {
         if (item.author && !orderedAuthors.includes(item.author)) {
@@ -545,7 +547,6 @@ function showUtenaAuthorWorks(author) {
         return;
     }
 
-    // スプレッドシートの掲載順通りに並べる（shuffleはしない）
     issueHaikus.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = 'saijiki-haiku-card utena-work-card';
