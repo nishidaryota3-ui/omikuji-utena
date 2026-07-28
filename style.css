@@ -58,6 +58,7 @@ body, html {
 
 #kigoList { gap: 1.8rem !important; }
 #haijinList { gap: 3.5rem; }
+#utenaAuthorList { gap: clamp(1.5rem, 4vw, 3.0rem); }
 
 /* 臺俳句の号内俳人リンク */
 .utena-author-link { margin-left: clamp(2.0rem, 4.5vw, 3.5rem); }
@@ -82,7 +83,7 @@ body, html {
 /* 🔍 季語検索ボックス ＆ 区切り線 */
 .saijiki-search-box {
     position: relative; width: clamp(260px, 60vw, 420px); margin-top: -20px; z-index: 40;
-    display: flex; flex-direction: column; align-items: center; border: none !important;
+    display: flex; flex-direction: column; align-items: center;
 }
 .saijiki-search-box input {
     width: 100%; padding: 8px 16px; border: 1px solid #d0c8b8; border-radius: 20px;
@@ -91,12 +92,12 @@ body, html {
 }
 .saijiki-search-box input:focus { border-color: #8c8476; background: #ffffff; }
 
-/* 🌸 区切り線（1本のみ綺麗に配置） */
+/* 元の区切り線 */
 .search-divider {
     width: 100%;
     height: 1px;
     background-color: #d0c8b8;
-    margin-top: 25px;
+    margin-top: 20px;
     opacity: 0.7;
 }
 
