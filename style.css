@@ -40,25 +40,29 @@ body, html {
     gap: clamp(1.2rem, 4vw, 2.8rem); width: 100%; height: 50vh; margin-top: 20px;
 }
 
-/* 🌸 横一列スクロールコンテナ */
+/* 🌸 横一列スクロールコンテナ（スマホ見切れ完全防護版） */
 .horizontal-scroll-container {
     display: flex; 
     flex-direction: row-reverse; 
-    justify-content: flex-start; 
     align-items: center;
     width: 90vw; 
     height: 65vh; 
     overflow-x: auto; 
     overflow-y: hidden; 
     scroll-behavior: smooth;
-    padding: 0 5vw;
+    padding: 0 8vw;
     margin: auto !important;
     max-width: 100% !important;
 }
 
+/* スクロール要素の先頭（右端）を画面内に安全に押し込む指定 */
+.horizontal-scroll-container > div:first-child {
+    margin-left: auto;
+}
+
 #kigoList { gap: 1.8rem !important; }
 #haijinList { gap: 3.5rem; }
-#utenaAuthorList { gap: clamp(1.5rem, 4vw, 3.0rem); }
+#utenaAuthorList { gap: clamp(1.8rem, 4.5vw, 3.5rem); }
 
 /* 臺俳句の号内俳人リンク */
 .utena-author-link { margin-left: clamp(2.0rem, 4.5vw, 3.5rem); }
