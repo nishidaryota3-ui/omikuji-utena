@@ -270,6 +270,16 @@ function renderPage(pageId) {
 function navigateTo(pageId) { renderPage(pageId); }
 function getSeasonCode(name) { const map = {'春':'haru', '夏':'natsu', '秋':'aki', '冬':'huyu', '新年':'shinnen', '無季':'muki'}; return map[name] || ''; }
 
+/* 🌸 横スクロール画面で確実に最右端（先頭）を表示させる補正関数 */
+function scrollToRightEnd(container) {
+    if (!container) return;
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            container.scrollLeft = 0; // 日本語縦書き・row-reverse環境での最右端
+        }, 50);
+    });
+}
+
 function createHaijinList() {
     const container = document.getElementById('haijinList'); 
     if (!container) return;
@@ -300,9 +310,7 @@ function createHaijinList() {
         container.appendChild(el);
     });
 
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 function jumpToAuthorRoom(author) {
@@ -380,9 +388,7 @@ function showKigoList(seasonCode, seasonName) {
     });
 
     renderPage('kigoListPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 function openSaijikiKigoWithCard(kigoName) {
@@ -441,9 +447,7 @@ function closeKigoCard() {
     });
 
     renderPage('saijikiListRoomPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 /* 🌸 年選択一覧 */
@@ -472,9 +476,7 @@ function showIssueYearList() {
     });
     
     renderPage('issueYearPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 /* 🌸 月選択一覧 */
@@ -509,9 +511,7 @@ function showIssueMonthList(year) {
     });
 
     renderPage('issueMonthPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 /* 🌸 号内モード選択画面 */
@@ -550,12 +550,10 @@ function showIssueDetailPage(year, month) {
     container.appendChild(haijinBtn);
 
     renderPage('issueDetailPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
-/* 🌸 号内・俳人一覧（CSSスクロール対応完全版） */
+/* 🌸 号内・俳人一覧（右端完全固定） */
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -581,11 +579,7 @@ function showUtenaAuthorListPage() {
     });
 
     renderPage('utenaAuthorListPage');
-
-    // 画面表示完了と同時に強制的にスクロール位置を一番右（先頭）に初期化
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 function showUtenaAuthorWorks(author) {
@@ -611,9 +605,7 @@ function showUtenaAuthorWorks(author) {
     });
 
     renderPage('saijikiListRoomPage');
-    requestAnimationFrame(() => {
-        container.scrollLeft = 0;
-    });
+    scrollToRightEnd(container);
 }
 
 function openRoom(type, targetValue, displayName) {
