@@ -136,7 +136,7 @@ function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
-    if (y === 2024) return '令和六年';
+    if (y === 2024) return '令和六年代';
     return `${y}年`;
 }
 
@@ -270,13 +270,14 @@ function renderPage(pageId) {
 function navigateTo(pageId) { renderPage(pageId); }
 function getSeasonCode(name) { const map = {'春':'haru', '夏':'natsu', '秋':'aki', '冬':'huyu', '新年':'shinnen', '無季':'muki'}; return map[name] || ''; }
 
-/* 🌸 横スクロール画面で確実に最右端（先頭）を表示させる補正関数 */
+/* 🌸 横スクロールコンテナで「先頭（右端）」に確実に固定する制御関数 */
 function scrollToRightEnd(container) {
     if (!container) return;
     requestAnimationFrame(() => {
         setTimeout(() => {
-            container.scrollLeft = 0; // 日本語縦書き・row-reverse環境での最右端
-        }, 50);
+            // 左から右へのレイアウト（row）で一番右（scrollWidth）にスクロール
+            container.scrollLeft = container.scrollWidth - container.clientWidth;
+        }, 30);
     });
 }
 
@@ -299,7 +300,7 @@ function createHaijinList() {
     uniqueAuthors.sort((a, b) => {
         let kanaA = authorMap[a];
         let kanaB = authorMap[b];
-        return kanaA.localeCompare(kanaB, 'ja');
+        return kanaB.localeCompare(kanaA, 'ja'); // 右端から五十音順に並ぶよう反転
     });
 
     uniqueAuthors.forEach(author => {
@@ -380,7 +381,7 @@ function showKigoList(seasonCode, seasonName) {
     
     let uniqueKigos = Object.keys(kigoMap);
     if (uniqueKigos.length === 0) { alert('まだこの季節の季語が登録されていません。'); return; }
-    uniqueKigos.sort((a, b) => kigoMap[a].localeCompare(kigoMap[b], 'ja'));
+    uniqueKigos.sort((a, b) => kigoMap[b].localeCompare(kigoMap[a], 'ja')); // 右端から並ぶよう反転
     uniqueKigos.forEach(kigo => {
         const el = document.createElement('div'); el.className = 'vertical-link'; el.innerText = kigo;
         el.onclick = function() { navState.kigoName = kigo; openSaijikiKigoWithCard(kigo); }; 
@@ -436,7 +437,7 @@ function closeKigoCard() {
         return;
     }
 
-    matchingHaikus.forEach(item => {
+    matchingHaikus.reverse().forEach(item => {
         const card = document.createElement('div');
         card.className = 'saijiki-haiku-card';
         card.innerHTML = `
@@ -460,7 +461,7 @@ function showIssueYearList() {
     container.innerHTML = '';
 
     let years = [...new Set(haikuDatabase.map(item => item.issueYear).filter(Boolean))];
-    years.sort((a, b) => Number(b) - Number(a));
+    years.sort((a, b) => Number(a) - Number(b));
 
     if (years.length === 0) {
         alert('うてな俳句のデータがまだ登録されていません。');
@@ -476,7 +477,6 @@ function showIssueYearList() {
     });
     
     renderPage('issueYearPage');
-    scrollToRightEnd(container);
 }
 
 /* 🌸 月選択一覧 */
@@ -496,7 +496,7 @@ function showIssueMonthList(year) {
         }
     });
 
-    let months = Object.keys(monthMap).sort((a, b) => Number(b) - Number(a));
+    let months = Object.keys(monthMap).sort((a, b) => Number(a) - Number(b));
 
     months.forEach(month => {
         let issueNo = monthMap[month];
@@ -511,7 +511,6 @@ function showIssueMonthList(year) {
     });
 
     renderPage('issueMonthPage');
-    scrollToRightEnd(container);
 }
 
 /* 🌸 号内モード選択画面 */
@@ -527,6 +526,14 @@ function showIssueDetailPage(year, month) {
 
     let monthLabel = toKanjiMonth(month);
 
+    const haijinBtn = document.createElement('div');
+    haijinBtn.className = 'vertical-link utena-mode-btn';
+    haijinBtn.innerText = '俳人別';
+    haijinBtn.onclick = function() {
+        showUtenaAuthorListPage();
+    };
+    container.appendChild(haijinBtn);
+
     const allBtn = document.createElement('div');
     allBtn.className = 'vertical-link utena-mode-btn';
     allBtn.innerText = `おみ句じ（${monthLabel}号）`;
@@ -541,19 +548,10 @@ function showIssueDetailPage(year, month) {
     };
     container.appendChild(allBtn);
 
-    const haijinBtn = document.createElement('div');
-    haijinBtn.className = 'vertical-link utena-mode-btn';
-    haijinBtn.innerText = '俳人別';
-    haijinBtn.onclick = function() {
-        showUtenaAuthorListPage();
-    };
-    container.appendChild(haijinBtn);
-
     renderPage('issueDetailPage');
-    scrollToRightEnd(container);
 }
 
-/* 🌸 号内・俳人一覧（右端完全固定） */
+/* 🌸 号内・俳人一覧（右端絶対固定・見切れゼロ版） */
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -568,7 +566,8 @@ function showUtenaAuthorListPage() {
         }
     });
 
-    orderedAuthors.forEach(author => {
+    // 1人目（先頭）が最右端に配置されるよう、配列を逆順でレンダリング
+    orderedAuthors.reverse().forEach(author => {
         const el = document.createElement('div');
         el.className = 'vertical-link';
         el.innerText = author;
@@ -595,7 +594,7 @@ function showUtenaAuthorWorks(author) {
         return;
     }
 
-    issueHaikus.forEach((item) => {
+    issueHaikus.reverse().forEach((item) => {
         const card = document.createElement('div');
         card.className = 'saijiki-haiku-card utena-work-card';
         card.innerHTML = `
