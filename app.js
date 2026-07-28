@@ -415,7 +415,7 @@ function openSaijikiKigoWithCard(kigoName) {
     if (overlay) overlay.classList.remove('hidden');
 }
 
-/* 🌸 季語作品一覧（中央揃え） */
+/* 🌸 季語作品一覧 */
 function closeKigoCard() {
     const overlay = document.getElementById('kigoCardOverlay');
     if (overlay) overlay.classList.add('hidden');
@@ -440,14 +440,13 @@ function closeKigoCard() {
         container.appendChild(card);
     });
 
-    container.style.justifyContent = 'center';
     renderPage('saijikiListRoomPage');
     requestAnimationFrame(() => {
         container.scrollLeft = 0;
     });
 }
 
-/* 🌸 年選択一覧（中央揃え） */
+/* 🌸 年選択一覧 */
 function showIssueYearList() {
     navState.category = 'utena_archive';
     navState.issueYear = ''; navState.issueMonth = '';
@@ -472,11 +471,13 @@ function showIssueYearList() {
         container.appendChild(el);
     });
     
-    container.style.justifyContent = 'center';
     renderPage('issueYearPage');
+    requestAnimationFrame(() => {
+        container.scrollLeft = 0;
+    });
 }
 
-/* 🌸 月選択一覧（中央揃え） */
+/* 🌸 月選択一覧 */
 function showIssueMonthList(year) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = '';
@@ -507,11 +508,13 @@ function showIssueMonthList(year) {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = 'center';
     renderPage('issueMonthPage');
+    requestAnimationFrame(() => {
+        container.scrollLeft = 0;
+    });
 }
 
-/* 🌸 号内モード選択画面（「おみ句じ（〇月号）」の動的表示） */
+/* 🌸 号内モード選択画面 */
 function showIssueDetailPage(year, month) {
     navState.category = 'utena_archive';
     navState.issueYear = year; navState.issueMonth = month;
@@ -546,11 +549,13 @@ function showIssueDetailPage(year, month) {
     };
     container.appendChild(haijinBtn);
 
-    container.style.justifyContent = 'center';
     renderPage('issueDetailPage');
+    requestAnimationFrame(() => {
+        container.scrollLeft = 0;
+    });
 }
 
-/* 🌸 号内・俳人一覧（スマホでの見切れ防止修正版） */
+/* 🌸 号内・俳人一覧（CSSスクロール対応完全版） */
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -577,14 +582,9 @@ function showUtenaAuthorListPage() {
 
     renderPage('utenaAuthorListPage');
 
-    // 要素数・幅に応じて中央揃え／右寄せ（スクロール対応）を自動切り替え
+    // 画面表示完了と同時に強制的にスクロール位置を一番右（先頭）に初期化
     requestAnimationFrame(() => {
-        if (container.scrollWidth > container.clientWidth) {
-            container.style.justifyContent = 'flex-start';
-            container.scrollLeft = 0; // スクロール位置を一番右（先頭）に確実に固定
-        } else {
-            container.style.justifyContent = 'center';
-        }
+        container.scrollLeft = 0;
     });
 }
 
@@ -610,8 +610,10 @@ function showUtenaAuthorWorks(author) {
         container.appendChild(card);
     });
 
-    container.style.justifyContent = 'center';
     renderPage('saijikiListRoomPage');
+    requestAnimationFrame(() => {
+        container.scrollLeft = 0;
+    });
 }
 
 function openRoom(type, targetValue, displayName) {
