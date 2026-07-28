@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>うてな俳句会 臺俳句</title>
 
-    <!-- PWA / Android・iOS スタンドアロン指定 -->
+    <!-- PWA / Android・iOS スタンドアロン＆マニフェスト指定 -->
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,7 +14,7 @@
     <meta name="application-name" content="うてな俳句">
     <meta name="theme-color" content="#faf9f6">
     
-    <!-- アプリアイコン指定 -->
+    <!-- 🖼️ 作成されたアプリアイコン指定 (icon.png) -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
 
@@ -93,7 +94,7 @@
         <div class="saijiki-search-box">
             <input type="text" id="kigoSearchInput" placeholder="季語を検索（例：春の夕）" oninput="handleKigoSearch()">
             <div id="searchResults" class="search-results-dropdown hidden"></div>
-            <!-- 区切り線 -->
+            <!-- 単一の区切り線 -->
             <div class="search-divider"></div>
         </div>
 
