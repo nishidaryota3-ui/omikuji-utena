@@ -11,6 +11,7 @@ body, html {
     writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
     font-size: clamp(1.1rem, 4vw, 1.4rem); letter-spacing: 0.25em;
     cursor: pointer; transition: color 0.3s ease; white-space: nowrap;
+    display: inline-block; vertical-align: middle;
 }
 .vertical-link:hover { color: #888888; }
 
@@ -34,7 +35,7 @@ body, html {
 
 #haijinPage { display: none; }
 
-/* 🌸 季節選択・年選択・月選択：画面サイズ問わず【完全中央揃え】コンテナ */
+/* 🌸 季節選択・年選択・月選択：完全中央揃えコンテナ */
 .fits-screen-container { 
     display: flex; 
     flex-direction: row-reverse; 
@@ -46,27 +47,23 @@ body, html {
     margin-top: 20px;
 }
 
-/* 🌸 横一列スクロールコンテナ（見切れ事故防止・安定版） */
+/* 🌸 横一列スクロールコンテナ（スマホはみ出し完全撲滅版） */
 .horizontal-scroll-container {
-    display: flex; 
-    flex-direction: row; 
-    justify-content: flex-start; 
-    align-items: center;
+    display: block !important;
+    white-space: nowrap !important;
     width: 90vw; 
     height: 65vh; 
-    overflow-x: auto; 
-    overflow-y: hidden; 
-    padding: 0 8vw;
+    overflow-x: auto !important; 
+    overflow-y: hidden !important; 
+    padding: 10vh 8vw;
     margin: auto !important;
     max-width: 100% !important;
+    text-align: right; /* 右端（1人目）から綺麗に並べる指定 */
 }
 
-#kigoList { gap: 1.8rem !important; }
-#haijinList { gap: 3.5rem; }
-#utenaAuthorList { gap: clamp(1.8rem, 4.5vw, 3.5rem); }
-
-/* 臺俳句の号内俳人リンク */
-.utena-author-link { margin-left: clamp(2.0rem, 4.5vw, 3.5rem); }
+#kigoList .vertical-link { margin-left: 1.8rem; }
+#haijinList .vertical-link { margin-left: 3.5rem; }
+#utenaAuthorList .vertical-link { margin-left: clamp(1.8rem, 4.5vw, 3.5rem); }
 
 .horizontal-scroll-container::-webkit-scrollbar { height: 6px; }
 .horizontal-scroll-container::-webkit-scrollbar-track { background: #eae8e3; border-radius: 3px; }
@@ -144,14 +141,21 @@ body, html {
 
 /* 📜 季寄せ作品一覧スクロール画面 */
 .saijiki-scroll-list { 
-    gap: 3.5rem !important; 
-    padding: 0 10vw !important;
+    text-align: right;
+    padding: 10vh 10vw !important;
 }
-.saijiki-haiku-card { display: flex; flex-direction: row-reverse; gap: 1.2rem; align-items: center; }
-.saijiki-phrase { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 1.35rem; letter-spacing: 0.25em; line-height: 1.4; color: #2b2b2b; }
+.saijiki-haiku-card { 
+    display: inline-flex; 
+    flex-direction: row-reverse; 
+    gap: 1.2rem; 
+    align-items: center; 
+    vertical-align: middle;
+    margin-left: 3.5rem;
+}
+.saijiki-phrase { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 1.35rem; letter-spacing: 0.25em; line-height: 1.4; color: #2b2b2b; white-space: nowrap; }
 .saijiki-phrase ruby { ruby-position: over; -webkit-ruby-position: over; }
 .saijiki-phrase rt { font-size: 0.45em; color: #666666; }
-.saijiki-author { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 0.95rem; letter-spacing: 0.2em; color: #777777; margin-top: 3rem; }
+.saijiki-author { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-size: 0.95rem; letter-spacing: 0.2em; color: #777777; margin-top: 3rem; white-space: nowrap; }
 
 /* 🧭 グローバルヘッダー */
 .global-header-area {
@@ -210,7 +214,7 @@ body, html {
 .utena-work-card {
     min-width: 120px !important;
     padding: 0 15px !important;
-    justify-content: center !important;
+    margin-left: 1.5rem !important;
 }
 
 /* 🌸 縦書き時のルビ範囲崩れ防止指定 */
