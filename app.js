@@ -24,6 +24,15 @@ let navState = {
 let touchStartX = 0;
 let touchStartY = 0;
 
+// 📲 ServiceWorker（PWAオフライン対応）の登録
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+            console.log('ServiceWorker登録失敗:', err);
+        });
+    });
+}
+
 window.onload = function() {
     const scriptHaiku = document.createElement('script');
     scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&range=A:L&tqx=responseHandler:mainDataReceived`;
@@ -107,7 +116,6 @@ function saijikiDataReceived(data) {
 
             let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
             
-            // ★ 子季語の区切り文字（カンマ / スラッシュ / 読点）を画面表示用に「、」へ統一
             let rawChildKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
             let childKigos = rawChildKigos.replace(/[/／,，]/g, '、');
 
