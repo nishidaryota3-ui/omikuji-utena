@@ -24,15 +24,6 @@ let navState = {
 let touchStartX = 0;
 let touchStartY = 0;
 
-// 📲 ServiceWorker（PWAオフライン対応）の登録
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {
-            console.log('ServiceWorker登録失敗:', err);
-        });
-    });
-}
-
 window.onload = function() {
     const scriptHaiku = document.createElement('script');
     scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&range=A:L&tqx=responseHandler:mainDataReceived`;
@@ -559,7 +550,7 @@ function showIssueDetailPage(year, month) {
     renderPage('issueDetailPage');
 }
 
-/* 🌸 号内・俳人一覧（中央揃え） */
+/* 🌸 号内・俳人一覧（スマホでの見切れ防止修正版） */
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -584,8 +575,17 @@ function showUtenaAuthorListPage() {
         container.appendChild(el);
     });
 
-    container.style.justifyContent = 'center';
     renderPage('utenaAuthorListPage');
+
+    // 要素数・幅に応じて中央揃え／右寄せ（スクロール対応）を自動切り替え
+    requestAnimationFrame(() => {
+        if (container.scrollWidth > container.clientWidth) {
+            container.style.justifyContent = 'flex-start';
+            container.scrollLeft = 0; // スクロール位置を一番右（先頭）に確実に固定
+        } else {
+            container.style.justifyContent = 'center';
+        }
+    });
 }
 
 function showUtenaAuthorWorks(author) {
