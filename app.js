@@ -88,7 +88,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 🌸 歳時記データ受信処理（/ スラッシュ区切り対応版）
+// 🌸 歳時記データ受信処理
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -136,7 +136,7 @@ function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
-    if (y === 2024) return '令和六年代';
+    if (y === 2024) return '令和六年';
     return `${y}年`;
 }
 
@@ -270,14 +270,13 @@ function renderPage(pageId) {
 function navigateTo(pageId) { renderPage(pageId); }
 function getSeasonCode(name) { const map = {'春':'haru', '夏':'natsu', '秋':'aki', '冬':'huyu', '新年':'shinnen', '無季':'muki'}; return map[name] || ''; }
 
-/* 🌸 横スクロールコンテナで「先頭（右端）」に確実に固定する制御関数 */
+/* 🌸 スクロール位置を一番右端（1人目）に確実に固定する処理 */
 function scrollToRightEnd(container) {
     if (!container) return;
     requestAnimationFrame(() => {
         setTimeout(() => {
-            // 左から右へのレイアウト（row）で一番右（scrollWidth）にスクロール
-            container.scrollLeft = container.scrollWidth - container.clientWidth;
-        }, 30);
+            container.scrollLeft = container.scrollWidth;
+        }, 50);
     });
 }
 
@@ -300,7 +299,7 @@ function createHaijinList() {
     uniqueAuthors.sort((a, b) => {
         let kanaA = authorMap[a];
         let kanaB = authorMap[b];
-        return kanaB.localeCompare(kanaA, 'ja'); // 右端から五十音順に並ぶよう反転
+        return kanaB.localeCompare(kanaA, 'ja');
     });
 
     uniqueAuthors.forEach(author => {
@@ -381,7 +380,7 @@ function showKigoList(seasonCode, seasonName) {
     
     let uniqueKigos = Object.keys(kigoMap);
     if (uniqueKigos.length === 0) { alert('まだこの季節の季語が登録されていません。'); return; }
-    uniqueKigos.sort((a, b) => kigoMap[b].localeCompare(kigoMap[a], 'ja')); // 右端から並ぶよう反転
+    uniqueKigos.sort((a, b) => kigoMap[b].localeCompare(kigoMap[a], 'ja'));
     uniqueKigos.forEach(kigo => {
         const el = document.createElement('div'); el.className = 'vertical-link'; el.innerText = kigo;
         el.onclick = function() { navState.kigoName = kigo; openSaijikiKigoWithCard(kigo); }; 
@@ -551,7 +550,7 @@ function showIssueDetailPage(year, month) {
     renderPage('issueDetailPage');
 }
 
-/* 🌸 号内・俳人一覧（右端絶対固定・見切れゼロ版） */
+/* 🌸 号内・俳人一覧（スマホはみ出し完全対応版） */
 function showUtenaAuthorListPage() {
     const container = document.getElementById('utenaAuthorList');
     if (!container) return;
@@ -566,7 +565,7 @@ function showUtenaAuthorListPage() {
         }
     });
 
-    // 1人目（先頭）が最右端に配置されるよう、配列を逆順でレンダリング
+    // 先頭の人が右端に並ぶよう逆順追加
     orderedAuthors.reverse().forEach(author => {
         const el = document.createElement('div');
         el.className = 'vertical-link';
