@@ -1,4 +1,8 @@
+// ① 俳句集成用スプレッドシートID（鑑賞用）
 const SPREADSHEET_ID = '1iyBgs4Blf7gW1xIZfbxdWQJVg9OHVUU65IgJ7OjVf90';
+
+// ② 新しい「歳時記データベース」専用スプレッドシートID（独立マスターを参照）
+const SAIJIKI_SPREADSHEET_ID = '1EOmZn53hFA8GpVdcn--aU-lj9uHjGQpnSZ1o9jbnsYs';
 
 let haikuDatabase = [];
 let saijikiDict = {}; 
@@ -25,12 +29,14 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 window.onload = function() {
+    // 俳句集成データの読み込み（古いシートから）
     const scriptHaiku = document.createElement('script');
     scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&range=A:L&tqx=responseHandler:mainDataReceived`;
     document.body.appendChild(scriptHaiku);
 
+    // 歳時記データの読み込み（新しく指定いただいた独立シートから取得）
     const scriptSaijiki = document.createElement('script');
-    scriptSaijiki.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('歳時記データベース')}&range=A:H&tqx=responseHandler:saijikiDataReceived`;
+    scriptSaijiki.src = `https://docs.google.com/spreadsheets/d/${SAIJIKI_SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('歳時記データベース')}&range=A:H&tqx=responseHandler:saijikiDataReceived`;
     document.body.appendChild(scriptSaijiki);
 
     initSwipeEvents();
@@ -88,7 +94,7 @@ function mainDataReceived(data) {
     }
 }
 
-// 🌸 歳時記データ受信処理（/ スラッシュ区切り対応版）
+// 🌸 歳時記データ受信処理（新しいシートから取得されたデータを受け取ります）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
@@ -134,6 +140,9 @@ function hideLoadingOverlay() {
 
 function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
+    if (y === 2026) return '令和八年';
+    if (y === 2025) return '令和七年';
+    if (y === 2024) return '令和```javascript
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
     if (y === 2024) return '令和六年';
@@ -705,32 +714,4 @@ function initSwipeEvents() {
         if (!isRoomOpen) return;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    room.addEventListener('touchend', function(e) {
-        if (!isRoomOpen) return;
-        const diffX = e.changedTouches[0].clientX - touchStartX;
-        const diffY = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX > 0) changeHaiku(1);
-            else changeHaiku(-1);
-        }
-    }, { passive: true });
-}
-
-document.addEventListener('keydown', function(event) {
-    const activeEl = document.activeElement;
-    if (activeEl && activeEl.tagName === 'INPUT') {
-        return;
-    }
-
-    if (event.key === 'o' || event.key === 'O') { triggerInstantOmikuji(); return; }
-    if (!isRoomOpen) return;
-    if (event.key === 'ArrowLeft') changeHaiku(1); 
-    if (event.key === 'ArrowRight') changeHaiku(-1); 
-    if (event.key === 'i' || event.key === 'I') {
-        if (!infoRevealed) {
-            revealHiddenInfo();
-        }
-    }
-});
+    }, { passive
