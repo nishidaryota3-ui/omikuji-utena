@@ -16,9 +16,6 @@ window.onload = function() {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
-    // 最初はトップページを表示
-    navigateTo('topPage');
-
     // キャッシュから先行復元
     restoreCachedMasterData();
 
@@ -159,7 +156,7 @@ function parseSeasonCode(str) {
     if (s.includes('haru') || s === '春') return 'haru';
     if (s.includes('natsu') || s === '夏') return 'natsu';
     if (s.includes('aki') || s === '秋') return 'aki';
-    if (s.includes('fuyu') || s.includes('huyu') || s === '冬') return 'fuyu';
+    if (s.includes('fuyu') || s.includes('huyu') || s === '冬') return 'huyu';
     if (s.includes('shinnen') || s.includes('sinnen') || s === '新年') return 'shinnen';
     if (s.includes('muki') || s === '無季') return 'muki';
     return 'haru';
@@ -170,18 +167,16 @@ function getSeasonNameJa(code) {
     return map[code] || code;
 }
 
-/* 🧭 画面切り替え（レイヤーページ制御） */
+/* 🧭 画面切り替え（CSSのactive管理のみに修正） */
 function navigateTo(pageId) {
-    const pages = document.querySelectorAll('.layer-page');
-    pages.forEach(el => {
+    document.querySelectorAll('.layer-page').forEach(el => {
         el.classList.remove('active');
-        el.style.display = 'none'; // 確実に非表示化
+        el.removeAttribute('style'); // JSで付けた直書きスタイルを消去してCSSデザインを復元
     });
 
     const target = document.getElementById(pageId);
     if (target) {
         target.classList.add('active');
-        target.style.display = 'block'; // 確実に表示
     }
 
     // ヘッダーパンくず更新
