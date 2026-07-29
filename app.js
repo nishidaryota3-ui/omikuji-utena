@@ -142,9 +142,6 @@ function toJapaneseEra(yearNum) {
     let y = Number(yearNum);
     if (y === 2026) return '令和八年';
     if (y === 2025) return '令和七年';
-    if (y === 2024) return '令和```javascript
-    if (y === 2026) return '令和八年';
-    if (y === 2025) return '令和七年';
     if (y === 2024) return '令和六年';
     return `${y}年`;
 }
@@ -714,4 +711,32 @@ function initSwipeEvents() {
         if (!isRoomOpen) return;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-    }, { passive
+    }, { passive: true });
+
+    room.addEventListener('touchend', function(e) {
+        if (!isRoomOpen) return;
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX > 0) changeHaiku(1);
+            else changeHaiku(-1);
+        }
+    }, { passive: true });
+}
+
+document.addEventListener('keydown', function(event) {
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.tagName === 'INPUT') {
+        return;
+    }
+
+    if (event.key === 'o' || event.key === 'O') { triggerInstantOmikuji(); return; }
+    if (!isRoomOpen) return;
+    if (event.key === 'ArrowLeft') changeHaiku(1); 
+    if (event.key === 'ArrowRight') changeHaiku(-1); 
+    if (event.key === 'i' || event.key === 'I') {
+        if (!infoRevealed) {
+            revealHiddenInfo();
+        }
+    }
+});
