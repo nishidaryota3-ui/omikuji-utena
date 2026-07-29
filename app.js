@@ -31,12 +31,12 @@ let touchStartY = 0;
 window.onload = function() {
     // 俳句集成データの読み込み（古いシートから）
     const scriptHaiku = document.createElement('script');
-    scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&range=A:L&tqx=responseHandler:mainDataReceived`;
+    scriptHaiku.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('俳句集成')}&tqx=responseHandler:mainDataReceived`;
     document.body.appendChild(scriptHaiku);
 
     // 歳時記データの読み込み（新しく指定いただいた独立シートから取得）
     const scriptSaijiki = document.createElement('script');
-    scriptSaijiki.src = `https://docs.google.com/spreadsheets/d/${SAIJIKI_SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('歳時記データベース')}&range=A:H&tqx=responseHandler:saijikiDataReceived`;
+    scriptSaijiki.src = `https://docs.google.com/spreadsheets/d/${SAIJIKI_SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('歳時記データベース')}&tqx=responseHandler:saijikiDataReceived`;
     document.body.appendChild(scriptSaijiki);
 
     initSwipeEvents();
@@ -94,29 +94,30 @@ function mainDataReceived(data) {
     }
 }
 
-// 🌸 歳時記データ受信処理（新しいシートから取得されたデータを受け取ります）
+// 🌸 歳時記データ受信処理（安全・確実抽出版）
 function saijikiDataReceived(data) {
     try {
         if (!data || !data.table || !data.table.rows) return;
         const rows = data.table.rows;
         let dict = {};
 
+        const getCellValue = (cells, idx) => {
+            if (!cells || !cells[idx]) return '';
+            let val = cells[idx].v !== undefined && cells[idx].v !== null ? cells[idx].v : cells[idx].f;
+            return val !== undefined && val !== null ? String(val).trim() : '';
+        };
+
         for (let i = 0; i < rows.length; i++) {
             const rowCells = rows[i].c;
             if (!rowCells) continue;
 
-            let parentVal = rowCells[2] ? (rowCells[2].v !== undefined ? rowCells[2].v : rowCells[2].f) : null;
-            if (parentVal === null || parentVal === undefined) continue;
+            let parentKigo = getCellValue(rowCells, 2).replace(/[\s\u3000]+/g, '');
+            if (!parentKigo || parentKigo === '親季語') continue;
 
-            let parentKigo = String(parentVal).replace(/[\s\u3000]+/g, '').trim();
-            if (parentKigo === '親季語' || parentKigo === '') continue;
-
-            let kigoKana = rowCells[3] && (rowCells[3].v || rowCells[3].f) ? String(rowCells[3].v || rowCells[3].f).trim() : '';
-            
-            let rawChildKigos = rowCells[6] && (rowCells[6].v || rowCells[6].f) ? String(rowCells[6].v || rowCells[6].f).trim() : '';
+            let kigoKana = getCellValue(rowCells, 3);
+            let rawChildKigos = getCellValue(rowCells, 6);
             let childKigos = rawChildKigos.replace(/[/／,，]/g, '、');
-
-            let desc = rowCells[7] && (rowCells[7].v || rowCells[7].f) ? String(rowCells[7].v || rowCells[7].f).trim() : '';
+            let desc = getCellValue(rowCells, 7);
 
             if (!dict[parentKigo]) {
                 dict[parentKigo] = { parentKigo, kigoKana, childKigos, desc };
