@@ -16,6 +16,9 @@ window.onload = function() {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
+    // 最初はトップページを表示
+    navigateTo('topPage');
+
     // キャッシュから先行復元
     restoreCachedMasterData();
 
@@ -34,6 +37,7 @@ function restoreCachedMasterData() {
 
         if (haikuDatabase.length > 0) {
             hideLoading();
+            renderHaijinList();
         }
     } catch (e) {
         console.error('キャッシュ復元エラー', e);
@@ -85,6 +89,7 @@ window.haikuDataReceived = function(data) {
         haikuDatabase = list;
         localStorage.setItem('utena_haiku_db', JSON.stringify(haikuDatabase));
         hideLoading();
+        renderHaijinList();
     } catch (e) {
         console.error('俳句マスター解析エラー', e);
     }
@@ -154,7 +159,7 @@ function parseSeasonCode(str) {
     if (s.includes('haru') || s === '春') return 'haru';
     if (s.includes('natsu') || s === '夏') return 'natsu';
     if (s.includes('aki') || s === '秋') return 'aki';
-    if (s.includes('fuyu') || s.includes('huyu') || s === '冬') return 'huyu';
+    if (s.includes('fuyu') || s.includes('huyu') || s === '冬') return 'fuyu';
     if (s.includes('shinnen') || s.includes('sinnen') || s === '新年') return 'shinnen';
     if (s.includes('muki') || s === '無季') return 'muki';
     return 'haru';
@@ -165,11 +170,30 @@ function getSeasonNameJa(code) {
     return map[code] || code;
 }
 
-/* 🧭 画面切り替え */
+/* 🧭 画面切り替え（レイヤーページ制御） */
 function navigateTo(pageId) {
-    document.querySelectorAll('.layer-page').forEach(el => el.classList.remove('active'));
+    const pages = document.querySelectorAll('.layer-page');
+    pages.forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none'; // 確実に非表示化
+    });
+
     const target = document.getElementById(pageId);
-    if (target) target.classList.add('active');
+    if (target) {
+        target.classList.add('active');
+        target.style.display = 'block'; // 確実に表示
+    }
+
+    // ヘッダーパンくず更新
+    if (pageId === 'topPage') {
+        updateHeader('', '');
+    } else if (pageId === 'haijinPage') {
+        updateHeader('おみ句じ < 俳人', '');
+    } else if (pageId === 'haikuPage') {
+        updateHeader('おみ句じ < 季節', '');
+    } else if (pageId === 'saijikiPage') {
+        updateHeader('季寄せ', '');
+    }
 
     // 猫ボタンの表示制御
     const catBtn = document.getElementById('fixedCatBtn');
@@ -180,6 +204,31 @@ function navigateTo(pageId) {
             catBtn.classList.add('hidden');
         }
     }
+}
+
+/* 👤 俳人一覧レンダリング */
+function renderHaijinList() {
+    const container = document.getElementById('haijinList');
+    if (!container) return;
+
+    let authorMap = {};
+    haikuDatabase.forEach(h => {
+        if (h.author && h.author !== '作者不詳') {
+            if (!authorMap[h.author]) authorMap[h.author] = h.authorKana || h.author;
+        }
+    });
+
+    let authors = Object.keys(authorMap).map(name => ({ name: name, kana: authorMap[name] }));
+    authors.sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
+
+    container.innerHTML = '';
+    authors.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'vertical-link';
+        div.innerText = item.name;
+        div.onclick = () => openRoom('author', item.name, item.name);
+        container.appendChild(div);
+    });
 }
 
 /* 🌸 季寄せ：季節ごとの親季語一覧を表示 */
@@ -199,13 +248,17 @@ function showKigoList(seasonCode, seasonName) {
     parentKigos.sort((a, b) => a.localeCompare(b, 'ja'));
 
     container.innerHTML = '';
-    parentKigos.forEach(pk => {
-        const item = document.createElement('div');
-        item.className = 'vertical-link';
-        item.innerText = pk;
-        item.onclick = () => openSaijikiListRoom(pk);
-        container.appendChild(item);
-    });
+    if (parentKigos.length === 0) {
+        container.innerHTML = '<div class="vertical-link" style="cursor:default;">作品データなし</div>';
+    } else {
+        parentKigos.forEach(pk => {
+            const item = document.createElement('div');
+            item.className = 'vertical-link';
+            item.innerText = pk;
+            item.onclick = () => openSaijikiListRoom(pk);
+            container.appendChild(item);
+        });
+    }
 
     updateHeader(`季寄せ < ${seasonName}`, '');
     navigateTo('kigoListPage');
@@ -276,7 +329,6 @@ function handleKigoSearch() {
         return;
     }
 
-    // 歳時記データベース（子季語含む）から全検索
     let hits = saijikiDatabase.filter(s => 
         s.parentKigo.includes(input) || 
         (s.children && s.children.some(c => c.includes(input)))
@@ -320,6 +372,56 @@ function closeKigoCard() {
     if (overlay) overlay.classList.add('hidden');
 }
 
+/* 📰 うてな俳句（発行年・月一覧） */
+function showIssueYearList() {
+    const container = document.getElementById('issueYearList');
+    if (!container) return;
+
+    let yearsSet = new Set(haikuDatabase.map(h => h.issueYear).filter(Boolean));
+    let years = Array.from(yearsSet).sort();
+
+    container.innerHTML = '';
+    if (years.length === 0) {
+        container.innerHTML = '<div class="vertical-link" style="cursor:default;">データなし</div>';
+    } else {
+        years.forEach(y => {
+            const div = document.createElement('div');
+            div.className = 'vertical-link';
+            div.innerText = `${y}年`;
+            div.onclick = () => showIssueMonthList(y);
+            container.appendChild(div);
+        });
+    }
+
+    updateHeader('うてな俳句 < 年選択', '');
+    navigateTo('issueYearPage');
+}
+
+function showIssueMonthList(year) {
+    const container = document.getElementById('issueMonthList');
+    if (!container) return;
+
+    let monthsSet = new Set(
+        haikuDatabase
+            .filter(h => h.issueYear === year)
+            .map(h => h.issueMonth)
+            .filter(Boolean)
+    );
+    let months = Array.from(monthsSet).sort((a, b) => parseInt(a) - parseInt(b));
+
+    container.innerHTML = '';
+    months.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'vertical-link';
+        div.innerText = `${m}月号`;
+        div.onclick = () => openRoom('issue', `${year}_${m}`, `${year}年${m}月号`);
+        container.appendChild(div);
+    });
+
+    updateHeader(`うてな俳句 < ${year}年`, '');
+    navigateTo('issueMonthPage');
+}
+
 /* 🎲 おみ句じ・部屋移動（一画面鑑賞） */
 function openRoom(type, filterVal, titleText) {
     if (type === 'detarame') {
@@ -328,6 +430,11 @@ function openRoom(type, filterVal, titleText) {
         currentRoomHaikus = haikuDatabase.filter(h => h.season === filterVal);
     } else if (type === 'kigo_muki') {
         currentRoomHaikus = haikuDatabase.filter(h => h.season === 'muki');
+    } else if (type === 'author') {
+        currentRoomHaikus = haikuDatabase.filter(h => h.author === filterVal);
+    } else if (type === 'issue') {
+        const [y, m] = filterVal.split('_');
+        currentRoomHaikus = haikuDatabase.filter(h => h.issueYear === y && h.issueMonth === m);
     }
 
     if (currentRoomHaikus.length === 0) {
@@ -335,12 +442,15 @@ function openRoom(type, filterVal, titleText) {
         return;
     }
 
-    // ランダムシャッフル
-    currentRoomHaikus.sort(() => Math.random() - 0.5);
+    // おみ句じ系はシャッフル
+    if (type === 'detarame' || type === 'haiku_season') {
+        currentRoomHaikus.sort(() => Math.random() - 0.5);
+    }
+    
     currentHaikuIndex = 0;
 
     displayCurrentHaiku();
-    updateHeader(`おみ句じ < ${titleText}`, `${currentRoomHaikus.length}句`);
+    updateHeader(`うてな俳句 < ${titleText}`, `${currentRoomHaikus.length}句`);
     navigateTo('roomPage');
 }
 
