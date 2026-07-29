@@ -170,17 +170,17 @@ function getSeasonNameJa(code) {
     return map[code] || code;
 }
 
-/* 🧭 画面切り替え（デザインを保護する究極版） */
+/* 🧭 画面切り替え（デザインを保護する究極版・修正） */
 function navigateTo(pageId) {
-    // 1. まず全ページを「表示しない」状態にする（インラインで none を指定）
+    // 1. まず全ページを「表示しない」状態にする
     document.querySelectorAll('.layer-page').forEach(el => {
         el.style.display = 'none';
     });
 
-    // 2. 開きたい対象ページだけ「表示しない」を解除し、元のCSS（flex等）を活かして表示する
+    // 2. 開きたい対象ページだけ「flex」で表示する（空白になるのを修正）
     const target = document.getElementById(pageId);
     if (target) {
-        target.style.display = ''; 
+        target.style.display = 'flex'; 
     }
 
     // 3. ヘッダーパンくず更新
@@ -188,6 +188,7 @@ function navigateTo(pageId) {
         updateHeader('', '');
     } else if (pageId === 'haijinPage') {
         updateHeader('おみ句じ < 俳人', '');
+        renderHaijinList(); // 念のためリストを再描画
     } else if (pageId === 'haikuPage') {
         updateHeader('おみ句じ < 季節', '');
     } else if (pageId === 'saijikiPage') {
@@ -277,10 +278,10 @@ function openSaijikiListRoom(parentKigo) {
 
     matchedHaikus.forEach(h => {
         const card = document.createElement('div');
-        card.className = 'haiku-card-item';
+        card.className = 'haiku-card-item saijiki-haiku-card'; // CSSクラスを追加してレイアウトを適用
         card.innerHTML = `
-            <div class="phrase">${h.phrase}</div>
-            <div class="author">${h.author || ''}</div>
+            <div class="phrase saijiki-phrase">${h.phrase}</div>
+            <div class="author saijiki-author">${h.author || ''}</div>
         `;
         container.appendChild(card);
     });
@@ -293,7 +294,7 @@ function openSaijikiListRoom(parentKigo) {
 /* 季語カードエレメント生成 */
 function createKigoCardElement(parentKigo) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'kigo-card-item';
+    wrapper.className = 'kigo-card-item'; // 必要に応じてCSSでスタイリング
 
     const info = saijikiDatabase.find(s => s.parentKigo === parentKigo);
 
@@ -336,8 +337,8 @@ function handleKigoSearch() {
         resultsEl.innerHTML = '';
         hits.slice(0, 10).forEach(hit => {
             const item = document.createElement('div');
-            item.className = 'search-item';
-            item.innerText = `${hit.parentKigo}（${getSeasonNameJa(hit.season)}）`;
+            item.className = 'search-item search-result-item'; // CSSクラスを追加
+            item.innerHTML = `<span class="search-parent">${hit.parentKigo}</span><span class="search-child">（${getSeasonNameJa(hit.season)}）</span>`;
             item.onclick = () => {
                 resultsEl.classList.add('hidden');
                 document.getElementById('kigoSearchInput').value = '';
@@ -374,7 +375,7 @@ function showIssueYearList() {
     if (!container) return;
 
     let yearsSet = new Set(haikuDatabase.map(h => h.issueYear).filter(Boolean));
-    let years = Array.from(yearsSet).sort();
+    let years = Array.from(yearsSet).sort((a, b) => b - a); // 新しい年が上（右）に来るように降順に変更
 
     container.innerHTML = '';
     if (years.length === 0) {
@@ -383,7 +384,7 @@ function showIssueYearList() {
         years.forEach(y => {
             const div = document.createElement('div');
             div.className = 'vertical-link';
-            div.innerText = `${y}年`;
+            div.innerText = `${y}年`; // 必要であれば toJapaneseEra 関数を復活させます
             div.onclick = () => showIssueMonthList(y);
             container.appendChild(div);
         });
@@ -403,13 +404,13 @@ function showIssueMonthList(year) {
             .map(h => h.issueMonth)
             .filter(Boolean)
     );
-    let months = Array.from(monthsSet).sort((a, b) => parseInt(a) - parseInt(b));
+    let months = Array.from(monthsSet).sort((a, b) => parseInt(b) - parseInt(a)); // 新しい月が上（右）に来るように降順に変更
 
     container.innerHTML = '';
     months.forEach(m => {
         const div = document.createElement('div');
         div.className = 'vertical-link';
-        div.innerText = `${m}月号`;
+        div.innerText = `${m}月号`; // 必要であれば toKanjiMonth 関数を復活させます
         div.onclick = () => openRoom('issue', `${year}_${m}`, `${year}年${m}月号`);
         container.appendChild(div);
     });
@@ -453,6 +454,12 @@ function displayCurrentHaiku() {
     if (currentRoomHaikus.length === 0) return;
     const item = currentRoomHaikus[currentHaikuIndex];
     document.getElementById('haikuPhrase').innerText = item.phrase;
+    
+    // パンくずリスト用の情報を整理
+    let kigoString = (item.season === 'muki') ? '無季' : (item.parentKigo || item.kigo);
+    if (item.detailSeason) {
+        kigoString = `${kigoString}（${item.detailSeason}）`;
+    }
     document.getElementById('roomMainTag').innerText = item.author || '';
 }
 
@@ -471,7 +478,7 @@ function updateHeader(breadcrumbText, rightTagText) {
     const bc = document.getElementById('globalBreadcrumb');
     if (bc) {
         bc.innerText = breadcrumbText;
-        bc.style.display = breadcrumbText ? 'block' : 'none';
+        bc.style.display = breadcrumbText ? 'flex' : 'none'; // flexに戻す
     }
     const tag = document.getElementById('roomMainTag');
     if (tag) tag.innerText = rightTagText;
