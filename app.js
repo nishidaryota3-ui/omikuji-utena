@@ -16,6 +16,9 @@ window.onload = function() {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
+    // 最初はトップページを表示
+    navigateTo('topPage');
+
     // キャッシュから先行復元
     restoreCachedMasterData();
 
@@ -167,19 +170,20 @@ function getSeasonNameJa(code) {
     return map[code] || code;
 }
 
-/* 🧭 画面切り替え（CSSのactive管理のみに修正） */
+/* 🧭 画面切り替え（デザインを保護する究極版） */
 function navigateTo(pageId) {
+    // 1. まず全ページを「表示しない」状態にする（インラインで none を指定）
     document.querySelectorAll('.layer-page').forEach(el => {
-        el.classList.remove('active');
-        el.removeAttribute('style'); // JSで付けた直書きスタイルを消去してCSSデザインを復元
+        el.style.display = 'none';
     });
 
+    // 2. 開きたい対象ページだけ「表示しない」を解除し、元のCSS（flex等）を活かして表示する
     const target = document.getElementById(pageId);
     if (target) {
-        target.classList.add('active');
+        target.style.display = ''; 
     }
 
-    // ヘッダーパンくず更新
+    // 3. ヘッダーパンくず更新
     if (pageId === 'topPage') {
         updateHeader('', '');
     } else if (pageId === 'haijinPage') {
@@ -190,7 +194,7 @@ function navigateTo(pageId) {
         updateHeader('季寄せ', '');
     }
 
-    // 猫ボタンの表示制御
+    // 4. 猫ボタンの表示制御
     const catBtn = document.getElementById('fixedCatBtn');
     if (catBtn) {
         if (pageId === 'topPage') {
@@ -232,7 +236,6 @@ function showKigoList(seasonCode, seasonName) {
     const container = document.getElementById('kigoList');
     if (!container) return;
 
-    // 俳句集成の中に実際に存在する親季語を抽出
     const existParentKigoSet = new Set(
         haikuDatabase
             .filter(h => h.season === seasonCode && h.parentKigo)
@@ -269,11 +272,9 @@ function openSaijikiListRoom(parentKigo) {
 
     container.innerHTML = '';
 
-    // 左端：季語カード（親季語・子季語・解説）
     const cardEl = createKigoCardElement(parentKigo);
     container.appendChild(cardEl);
 
-    // 右側：作品リスト
     matchedHaikus.forEach(h => {
         const card = document.createElement('div');
         card.className = 'haiku-card-item';
@@ -437,7 +438,6 @@ function openRoom(type, filterVal, titleText) {
         return;
     }
 
-    // おみ句じ系はシャッフル
     if (type === 'detarame' || type === 'haiku_season') {
         currentRoomHaikus.sort(() => Math.random() - 0.5);
     }
